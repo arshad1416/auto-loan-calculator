@@ -102,7 +102,7 @@ export const calculateAutoLoan = (input: CalculationInput): CalculationResult =>
 
     schedule.push({
       period: i,
-      payment: biWeeklyPayment,
+      payment: principalPayment + interestPayment,
       principal: principalPayment,
       interest: interestPayment,
       balance: currentBalance
