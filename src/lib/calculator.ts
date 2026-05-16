@@ -55,7 +55,7 @@ export function getYearRules(vehicleYear: number): YearRules {
   } else if (vehicleYear >= 2016) {
     return { maxTermAllowed: 60, minApr: 8.99, isBankFinancable: true, minDownPaymentPct: 0 };
   } else if (vehicleYear >= 2010) {
-    return { maxTermAllowed: 60, minApr: 14.99, isBankFinancable: true, minDownPaymentPct: 0.10 };
+    return { maxTermAllowed: 66, minApr: 14.99, isBankFinancable: true, minDownPaymentPct: 0.10 };
   } else {
     return { maxTermAllowed: 48, minApr: 19.99, isBankFinancable: false, minDownPaymentPct: 0.25 };
   }
@@ -144,15 +144,16 @@ export interface ReverseInput {
   vehicleYear: number;
   tradeInValue: number;
   downPayment: number;
+  termMonths: number;
   licensingFee: number;
 }
 
 export const reverseCalculateAutoLoan = (input: ReverseInput): CalculationResult => {
-  const { targetBiWeeklyPayment, targetMonthlyPayment, vehicleYear, tradeInValue, downPayment, licensingFee } = input;
+  const { targetBiWeeklyPayment, targetMonthlyPayment, vehicleYear, tradeInValue, downPayment, termMonths, licensingFee } = input;
   const monthlyTarget = targetMonthlyPayment > 0 ? targetMonthlyPayment : (targetBiWeeklyPayment * 26) / 12;
   const rules = getYearRules(vehicleYear);
   const r = rules.minApr / 100 / 12;
-  const n = rules.maxTermAllowed;
+  const n = Math.min(termMonths, rules.maxTermAllowed);
   let loanPrincipal: number;
   if (rules.minApr > 0) {
     const pow = Math.pow(1 + r, n);
@@ -180,7 +181,7 @@ export const reverseCalculateAutoLoan = (input: ReverseInput): CalculationResult
   const forwardResult = calculateAutoLoan({
     vehicleYear, vehiclePrice: maxPrice, tradeInValue,
     downPayment: Math.max(downPayment, maxPrice * rules.minDownPaymentPct),
-    apr: rules.minApr, termMonths: rules.maxTermAllowed, licensingFee,
+    apr: rules.minApr, termMonths: n, licensingFee,
   });
   return { ...forwardResult, maxVehiclePrice: maxPrice };
 };

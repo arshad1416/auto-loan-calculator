@@ -37,9 +37,9 @@ describe('calculateAutoLoan', () => {
     expect(r.isBankFinancable).toBe(true);
   });
 
-  it('2010-2015 vehicles: 60mo max, 14.99% min APR, 10% down on vehicle price', () => {
+  it('2010-2015 vehicles: 66mo max, 14.99% min APR, 10% down on vehicle price', () => {
     const r = calculateAutoLoan({ ...baseInput, vehicleYear: 2014, vehiclePrice: 30000 });
-    expect(r.maxTermAllowed).toBe(60);
+    expect(r.maxTermAllowed).toBe(66);
     expect(r.minApr).toBe(14.99);
     expect(r.minDownPaymentRequired).toBe(3000); // 10% of 30000
     expect(r.isBankFinancable).toBe(true);
@@ -142,26 +142,32 @@ describe('calculateAutoLoan', () => {
 
 describe('reverseCalculateAutoLoan', () => {
   it('calculates max vehicle price from target bi-weekly payment', () => {
-    const r = reverseCalculateAutoLoan({ targetBiWeeklyPayment: 500, targetMonthlyPayment: 0, vehicleYear: 2024, tradeInValue: 0, downPayment: 0, licensingFee: 56 });
+    const r = reverseCalculateAutoLoan({ targetBiWeeklyPayment: 500, targetMonthlyPayment: 0, vehicleYear: 2024, tradeInValue: 0, downPayment: 0, termMonths: 84, licensingFee: 56 });
     expect(r.maxVehiclePrice).toBeGreaterThan(60000);
     expect(r.maxVehiclePrice).toBeLessThan(63000);
     expect(r.biWeeklyPayment).toBeCloseTo(500, 0);
   });
   it('converts target monthly to bi-weekly automatically', () => {
-    const r = reverseCalculateAutoLoan({ targetBiWeeklyPayment: 0, targetMonthlyPayment: 1000, vehicleYear: 2024, tradeInValue: 0, downPayment: 0, licensingFee: 56 });
+    const r = reverseCalculateAutoLoan({ targetBiWeeklyPayment: 0, targetMonthlyPayment: 1000, vehicleYear: 2024, tradeInValue: 0, downPayment: 0, termMonths: 84, licensingFee: 56 });
     expect(r.biWeeklyPayment).toBeCloseTo(461.54, 0);
   });
-  it('2014 vehicle gets 14.99% APR, 60mo term with 10% down floor', () => {
-    const r = reverseCalculateAutoLoan({ targetBiWeeklyPayment: 400, targetMonthlyPayment: 0, vehicleYear: 2014, tradeInValue: 0, downPayment: 0, licensingFee: 56 });
-    expect(r.maxTermAllowed).toBe(60);
+  it('2014 vehicle gets 14.99% APR, 66mo max term with 10% down floor', () => {
+    const r = reverseCalculateAutoLoan({ targetBiWeeklyPayment: 400, targetMonthlyPayment: 0, vehicleYear: 2014, tradeInValue: 0, downPayment: 0, termMonths: 66, licensingFee: 56 });
+    expect(r.maxTermAllowed).toBe(66);
     expect(r.minApr).toBe(14.99);
     expect(r.loanPrincipal).toBeGreaterThan(0);
     expect(r.schedule.length).toBeGreaterThan(0);
   });
   it('pre-2010 vehicle gets 19.99% APR, 48mo, 25% down floor', () => {
-    const r = reverseCalculateAutoLoan({ targetBiWeeklyPayment: 300, targetMonthlyPayment: 0, vehicleYear: 2008, tradeInValue: 0, downPayment: 0, licensingFee: 56 });
+    const r = reverseCalculateAutoLoan({ targetBiWeeklyPayment: 300, targetMonthlyPayment: 0, vehicleYear: 2008, tradeInValue: 0, downPayment: 0, termMonths: 48, licensingFee: 56 });
     expect(r.maxTermAllowed).toBe(48);
     expect(r.minApr).toBe(19.99);
     expect(r.isBankFinancable).toBe(false);
+  });
+  it('shorter term reduces max vehicle price', () => {
+    const r66 = reverseCalculateAutoLoan({ targetBiWeeklyPayment: 400, targetMonthlyPayment: 0, vehicleYear: 2014, tradeInValue: 0, downPayment: 0, termMonths: 66, licensingFee: 56 });
+    const r48 = reverseCalculateAutoLoan({ targetBiWeeklyPayment: 400, targetMonthlyPayment: 0, vehicleYear: 2014, tradeInValue: 0, downPayment: 0, termMonths: 48, licensingFee: 56 });
+    expect(r48.maxVehiclePrice).toBeLessThan(r66.maxVehiclePrice);
+    expect(r48.biWeeklyPayment).toBeCloseTo(400, 0);
   });
 });

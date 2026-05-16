@@ -99,6 +99,7 @@ function runReverseCalc(state: CalculatorState, overrides: Partial<CalculatorSta
     vehicleYear: s.inputs.vehicleYear,
     tradeInValue: s.inputs.tradeInValue,
     downPayment: s.inputs.downPayment,
+    termMonths: s.inputs.termMonths,
     licensingFee: s.inputs.licensingFee,
   });
 }
@@ -128,6 +129,7 @@ export function createInitialState(): CalculatorState {
   };
 
   if (reverseMode) {
+    initialState.inputs.termMonths = initialState.results.maxTermAllowed;
     initialState.results = runReverseCalc(initialState, {});
     initialState.inputs.downPayment = Math.max(0, initialState.results.minDownPaymentRequired);
     initialState.inputs.vehiclePrice = initialState.results.maxVehiclePrice;
@@ -172,14 +174,16 @@ export function calculatorReducer(state: CalculatorState, action: CalculatorActi
 
       if (state.reverseMode) {
         const newInputs = { ...oldInputs, vehicleYear: year };
-        const newState = { ...state, inputs: newInputs };
-        const results = runReverseCalc(newState, {});
-        const finalDown = Math.max(newInputs.downPayment, results.minDownPaymentRequired);
-        const inputsWithClampedDown = { ...newInputs, downPayment: finalDown, vehiclePrice: results.maxVehiclePrice };
+        const rulesResult = calculateAutoLoan(newInputs);
+        // Reset term to max for new year
+        const inputsForCalc = { ...newInputs, termMonths: rulesResult.maxTermAllowed };
+        const results = runReverseCalc({ ...state, inputs: inputsForCalc }, {});
+        const finalDown = Math.max(inputsForCalc.downPayment, results.minDownPaymentRequired);
+        const inputsWithClampedDown = { ...inputsForCalc, downPayment: finalDown, vehiclePrice: results.maxVehiclePrice };
 
         const adjustments: Adjustment = {
           apr: null, // APR not user-editable in reverse mode
-          termMonths: null,
+          termMonths: oldInputs.termMonths !== inputsForCalc.termMonths ? { from: oldInputs.termMonths, to: inputsForCalc.termMonths } : null,
           downPayment: oldInputs.downPayment !== finalDown ? { from: oldInputs.downPayment, to: finalDown } : null,
         };
 
@@ -189,9 +193,10 @@ export function calculatorReducer(state: CalculatorState, action: CalculatorActi
           results: runReverseCalc({ ...state, inputs: inputsWithClampedDown }, {}),
         };
 
+        const hasAdj = adjustments.termMonths || adjustments.downPayment;
         return {
           ...finalState,
-          adjustments: adjustments.downPayment ? adjustments : null,
+          adjustments: hasAdj ? adjustments : null,
         };
       }
 
@@ -249,7 +254,7 @@ export function calculatorReducer(state: CalculatorState, action: CalculatorActi
         reverseMode: true,
         targetBiWeeklyPayment: targetBiWeekly,
         targetMonthlyPayment: targetMonthly,
-        inputs: { ...state.inputs, downPayment },
+        inputs: { ...state.inputs, downPayment, termMonths: state.results.maxTermAllowed },
       };
       const results = runReverseCalc(newState, {});
       return {

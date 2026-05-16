@@ -97,20 +97,21 @@ const LoanInputs: React.FC<Props> = ({
               </div>
             </div>
 
-            {/* Term (read-only) */}
+            {/* Term (editable slider, starts at max) */}
             <div className="input-group">
-              <label>Term</label>
-              <div style={{
-                padding: '0.75rem 1rem',
-                background: 'rgba(255,255,255,0.02)',
-                border: '1px solid var(--panel-border)',
-                borderRadius: '0.75rem',
-                fontSize: '1.125rem',
-              }}>
-                {results.maxTermAllowed} mo ({Math.round(results.maxTermAllowed / 12)} yr)
-              </div>
-              <div style={{ color: 'var(--text-secondary)', fontSize: '0.7rem', marginTop: '0.2rem' }}>
-                Auto from {inputs.vehicleYear} rules
+              <label>Loan Term: {inputs.termMonths} Months ({Math.round(inputs.termMonths / 12)} Years)</label>
+              <input
+                type="range"
+                name="termMonths"
+                min={12}
+                max={results.maxTermAllowed}
+                step={12}
+                value={inputs.termMonths}
+                onChange={(e) => onChange('termMonths', parseInt(e.target.value) || 12)}
+              />
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '0.5rem', fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
+                <span>12 mo</span>
+                <span>{results.maxTermAllowed} mo (max)</span>
               </div>
             </div>
           </>
