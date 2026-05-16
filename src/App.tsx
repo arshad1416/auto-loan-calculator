@@ -9,10 +9,10 @@ import LoanResults from './components/LoanResults';
 import AmortizationSchedule from './components/AmortizationSchedule';
 
 const App: React.FC = () => {
-  const [state, dispatch] = useReducer(calculatorReducer, createInitialState());
+  const [state, dispatch] = useReducer(calculatorReducer, undefined, createInitialState);
   const urlTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
-  // Sync URL after inputs change (debounced)
+  // Sync URL after state changes (debounced)
   useEffect(() => {
     clearTimeout(urlTimer.current);
     urlTimer.current = setTimeout(() => syncURL(state), 400);
@@ -66,10 +66,19 @@ const App: React.FC = () => {
         <LoanInputs
           inputs={state.inputs}
           results={state.results}
+          reverseMode={state.reverseMode}
+          targetBiWeeklyPayment={state.targetBiWeeklyPayment}
+          targetMonthlyPayment={state.targetMonthlyPayment}
           onChange={(field, value) => dispatch({ type: 'SET_FIELD', field, value })}
           onYearChange={(year) => dispatch({ type: 'SET_YEAR', year })}
+          onToggleMode={() => dispatch({ type: 'TOGGLE_MODE' })}
+          onTargetBiWeeklyChange={(value) => dispatch({ type: 'SET_TARGET_BIWEEKLY', value })}
+          onTargetMonthlyChange={(value) => dispatch({ type: 'SET_TARGET_MONTHLY', value })}
         />
-        <LoanResults results={state.results} />
+        <LoanResults
+          results={state.results}
+          reverseMode={state.reverseMode}
+        />
       </div>
 
       <AmortizationSchedule
