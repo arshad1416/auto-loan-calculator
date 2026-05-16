@@ -15,9 +15,9 @@ const App: React.FC = () => {
   // Sync URL after inputs change (debounced)
   useEffect(() => {
     clearTimeout(urlTimer.current);
-    urlTimer.current = setTimeout(() => syncURL(state.inputs), 400);
+    urlTimer.current = setTimeout(() => syncURL(state), 400);
     return () => clearTimeout(urlTimer.current);
-  }, [state.inputs]);
+  }, [state.inputs, state.reverseMode, state.targetBiWeeklyPayment, state.targetMonthlyPayment]);
 
   // Auto-dismiss adjustments after 6 seconds
   useEffect(() => {

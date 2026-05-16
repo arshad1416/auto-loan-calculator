@@ -38,7 +38,6 @@ export interface CalculationResult {
 
 const HST_RATE = 0.13;
 const OMVIC_FEE = 22.00; // 2026 Rate
-const LICENSING_FEE = 56.00;
 const ADMIN_FEE = 2000.00;
 
 interface YearRules {
