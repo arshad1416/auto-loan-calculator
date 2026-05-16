@@ -31,6 +31,7 @@ export interface CalculationResult {
   maxTermAllowed: number;
   minApr: number;
   minDownPaymentRequired: number;
+  licensingFee: number;
   isBankFinancable: boolean;
   schedule: AmortizationPeriod[];
   maxVehiclePrice: number;
@@ -129,6 +130,7 @@ export const calculateAutoLoan = (input: CalculationInput): CalculationResult =>
     totalInterest,
     totalCost,
     hst,
+    licensingFee,
     maxTermAllowed,
     minApr,
     minDownPaymentRequired,

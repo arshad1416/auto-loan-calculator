@@ -93,7 +93,7 @@ const LoanInputs: React.FC<Props> = ({
                 style={{ opacity: 0.6, cursor: 'not-allowed' }}
               />
               <div style={{ color: 'var(--text-secondary)', fontSize: '0.7rem', marginTop: '0.2rem' }}>
-                Auto from {inputs.vehicleYear} rules
+                Min for {inputs.vehicleYear}: {results.minApr}%
               </div>
             </div>
 

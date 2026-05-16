@@ -73,7 +73,7 @@ const LoanResults: React.FC<Props> = ({ results, reverseMode }) => (
     </div>
 
     <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', textAlign: 'center', opacity: 0.7 }}>
-      Includes $56 Licensing, $22 OMVIC, $2,000 Admin
+      Includes ${results.licensingFee ? '$' + results.licensingFee.toLocaleString() : '$56'} Licensing, $22 OMVIC, $2,000 Admin
     </div>
   </div>
 );
