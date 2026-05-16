@@ -7,8 +7,10 @@ interface Props {
   onYearChange: (year: number) => void;
 }
 
+const CURRENT_YEAR = new Date().getFullYear();
+const YEAR_OPTIONS = Array.from({ length: CURRENT_YEAR - 1990 + 2 }, (_, i) => 1990 + i);
+
 const LoanInputs: React.FC<Props> = ({ inputs, results, onChange, onYearChange }) => {
-  const isAprTooLow = inputs.apr < results.minApr;
   const isTermTooLong = inputs.termMonths > results.maxTermAllowed;
   const isDownPaymentTooLow = inputs.downPayment < results.minDownPaymentRequired;
 
@@ -17,14 +19,14 @@ const LoanInputs: React.FC<Props> = ({ inputs, results, onChange, onYearChange }
       <div className="input-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
         <div className="input-group" style={{ gridColumn: 'span 2' }}>
           <label>Vehicle Year</label>
-          <input
-            type="number"
-            name="vehicleYear"
+          <select
             value={inputs.vehicleYear}
-            onChange={(e) => onYearChange(parseFloat(e.target.value) || new Date().getFullYear())}
-            min={2010}
-            max={new Date().getFullYear() + 1}
-          />
+            onChange={(e) => onYearChange(parseInt(e.target.value))}
+          >
+            {YEAR_OPTIONS.map((y) => (
+              <option key={y} value={y}>{y}</option>
+            ))}
+          </select>
         </div>
 
         <div className="input-group">
@@ -45,13 +47,10 @@ const LoanInputs: React.FC<Props> = ({ inputs, results, onChange, onYearChange }
             value={inputs.apr}
             onChange={(e) => onChange('apr', parseFloat(e.target.value) || 0)}
             step="0.01"
-            style={{ borderColor: isAprTooLow ? 'var(--error-color)' : '' }}
           />
-          {isAprTooLow && (
-            <div style={{ color: 'var(--error-color)', fontSize: '0.7rem', marginTop: '0.2rem' }}>
-              Min for {inputs.vehicleYear}: {results.minApr}%
-            </div>
-          )}
+          <div style={{ color: 'var(--text-secondary)', fontSize: '0.7rem', marginTop: '0.2rem' }}>
+            Min for {inputs.vehicleYear}: {results.minApr}%
+          </div>
         </div>
 
         <div className="input-group">

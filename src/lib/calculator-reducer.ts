@@ -102,8 +102,7 @@ export function calculatorReducer(state: CalculatorState, action: CalculatorActi
       const oldInputs = state.inputs;
       const year = action.year;
 
-      // Ignore intermediate keystrokes — only apply rules for valid model years
-      if (year < 2010) {
+      if (year < 1990) {
         return {
           ...state,
           inputs: { ...oldInputs, vehicleYear: year },
