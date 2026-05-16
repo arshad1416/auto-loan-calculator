@@ -8,7 +8,7 @@ interface Props {
 }
 
 const CURRENT_YEAR = new Date().getFullYear();
-const YEAR_OPTIONS = Array.from({ length: CURRENT_YEAR - 1990 + 2 }, (_, i) => 1990 + i);
+const YEAR_OPTIONS = Array.from({ length: CURRENT_YEAR - 1990 + 2 }, (_, i) => 1990 + i).reverse();
 
 const LoanInputs: React.FC<Props> = ({ inputs, results, onChange, onYearChange }) => {
   const isTermTooLong = inputs.termMonths > results.maxTermAllowed;
@@ -72,9 +72,13 @@ const LoanInputs: React.FC<Props> = ({ inputs, results, onChange, onYearChange }
             onChange={(e) => onChange('downPayment', parseFloat(e.target.value) || 0)}
             style={{ borderColor: isDownPaymentTooLow ? 'var(--error-color)' : '' }}
           />
-          {isDownPaymentTooLow && (
-            <div style={{ color: 'var(--error-color)', fontSize: '0.7rem', marginTop: '0.2rem' }}>
-              Min 10% Required: ${results.minDownPaymentRequired.toLocaleString()}
+          {results.minDownPaymentRequired > 0 && (
+            <div style={{
+              color: isDownPaymentTooLow ? 'var(--error-color)' : 'var(--text-secondary)',
+              fontSize: '0.7rem',
+              marginTop: '0.2rem',
+            }}>
+              Min {Math.round(results.minDownPaymentRequired / inputs.vehiclePrice * 100)}% Required: ${results.minDownPaymentRequired.toLocaleString()}
             </div>
           )}
         </div>
