@@ -100,44 +100,43 @@ export function calculatorReducer(state: CalculatorState, action: CalculatorActi
 
     case 'SET_YEAR': {
       const oldInputs = state.inputs;
-      const newInputs = { ...oldInputs, vehicleYear: action.year };
+      const year = action.year;
+
+      // Ignore intermediate keystrokes — only apply rules for valid model years
+      if (year < 2010) {
+        return {
+          ...state,
+          inputs: { ...oldInputs, vehicleYear: year },
+          adjustments: null,
+        };
+      }
+
+      const newInputs = { ...oldInputs, vehicleYear: year };
       const rulesResult = calculateAutoLoan(newInputs);
 
-      // Detect adjustments
-      const adjustments: Adjustment = {
-        apr: null,
-        termMonths: null,
-        downPayment: null,
+      // Always reset to rules-based minimums on year change.
+      // Previously we only clamped upward (apr < minApr), so an APR
+      // pushed high by an intermediate keystroke (e.g. year=2 → 19.99%)
+      // would never come back down when the full year was entered.
+      const finalInputs = {
+        ...newInputs,
+        apr: rulesResult.minApr,
+        termMonths: Math.min(newInputs.termMonths, rulesResult.maxTermAllowed),
+        downPayment: Math.max(newInputs.downPayment, rulesResult.minDownPaymentRequired),
       };
 
-      let finalInputs = { ...newInputs };
-
-      if (newInputs.apr < rulesResult.minApr) {
-        adjustments.apr = { from: newInputs.apr, to: rulesResult.minApr };
-        finalInputs.apr = rulesResult.minApr;
-      }
-
-      if (newInputs.termMonths > rulesResult.maxTermAllowed) {
-        adjustments.termMonths = { from: newInputs.termMonths, to: rulesResult.maxTermAllowed };
-        finalInputs.termMonths = rulesResult.maxTermAllowed;
-      }
-
-      if (newInputs.downPayment < rulesResult.minDownPaymentRequired) {
-        adjustments.downPayment = {
-          from: newInputs.downPayment,
-          to: rulesResult.minDownPaymentRequired,
-        };
-        finalInputs.downPayment = rulesResult.minDownPaymentRequired;
-      }
+      const adjustments: Adjustment = {
+        apr: oldInputs.apr !== finalInputs.apr ? { from: oldInputs.apr, to: finalInputs.apr } : null,
+        termMonths: oldInputs.termMonths !== finalInputs.termMonths ? { from: oldInputs.termMonths, to: finalInputs.termMonths } : null,
+        downPayment: oldInputs.downPayment !== finalInputs.downPayment ? { from: oldInputs.downPayment, to: finalInputs.downPayment } : null,
+      };
 
       const hasAdjustments = adjustments.apr || adjustments.termMonths || adjustments.downPayment;
-
-      const finalResults = calculateAutoLoan(finalInputs);
 
       return {
         ...state,
         inputs: finalInputs,
-        results: finalResults,
+        results: calculateAutoLoan(finalInputs),
         adjustments: hasAdjustments ? adjustments : null,
       };
     }
