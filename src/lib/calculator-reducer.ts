@@ -88,7 +88,7 @@ const DEFAULTS: CalculationInput = {
   downPayment: 5000,
   apr: 6.99,
   termMonths: 84,
-  licensingFee: 56,
+  licensingFee: 59,
 };
 
 function runReverseCalc(state: CalculatorState, overrides: Partial<CalculatorState>): CalculationResult {
