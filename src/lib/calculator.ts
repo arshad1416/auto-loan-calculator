@@ -134,7 +134,7 @@ export const calculateAutoLoan = (input: CalculationInput): CalculationResult =>
     minDownPaymentRequired,
     isBankFinancable,
     schedule,
-    maxVehiclePrice: vehiclePrice
+    maxVehiclePrice: Math.round(vehiclePrice)
   };
 };
 
@@ -177,7 +177,7 @@ export const reverseCalculateAutoLoan = (input: ReverseInput): CalculationResult
     const taxableAmount = (loanPrincipal + downPayment - licensingFee) / 1.13;
     maxPrice = taxableAmount + tradeInValue - 2000.00 - 22.00;
   }
-  maxPrice = Math.max(0, Math.round(maxPrice * 100) / 100);
+  maxPrice = Math.max(0, Math.round(maxPrice));
   const forwardResult = calculateAutoLoan({
     vehicleYear, vehiclePrice: maxPrice, tradeInValue,
     downPayment: Math.max(downPayment, maxPrice * rules.minDownPaymentPct),
