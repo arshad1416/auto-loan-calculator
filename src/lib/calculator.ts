@@ -91,7 +91,7 @@ export const calculateAutoLoan = (input: CalculationInput): CalculationResult =>
   const rules = getYearRules(vehicleYear);
   const maxTermAllowed = rules.maxTermAllowed;
   const minApr = rules.minApr;
-  const minDownPaymentRequired = vehiclePrice * rules.minDownPaymentPct;
+  const minDownPaymentRequired = Math.round(vehiclePrice * rules.minDownPaymentPct);
   const isBankFinancable = rules.isBankFinancable;
 
   // 1. Calculate Taxable Amount

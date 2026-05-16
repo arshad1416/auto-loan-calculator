@@ -16,6 +16,10 @@ interface Props {
 const CURRENT_YEAR = new Date().getFullYear();
 const YEAR_OPTIONS = Array.from({ length: CURRENT_YEAR - 1990 + 2 }, (_, i) => 1990 + i).reverse();
 
+const fmt = (n: number) => n.toLocaleString();
+
+const parseFormatted = (raw: string): number => parseFloat(raw.replace(/,/g, '')) || 0;
+
 const LoanInputs: React.FC<Props> = ({
   inputs, results, reverseMode,
   targetBiWeeklyPayment, targetMonthlyPayment,
@@ -116,10 +120,12 @@ const LoanInputs: React.FC<Props> = ({
             <div className="input-group">
               <label>Vehicle Price ($)</label>
               <input
-                type="number"
+                type="text"
+                inputMode="numeric"
+                className="formatted-input"
                 name="vehiclePrice"
-                value={inputs.vehiclePrice}
-                onChange={(e) => onChange('vehiclePrice', parseFloat(e.target.value) || 0)}
+                value={inputs.vehiclePrice ? fmt(inputs.vehiclePrice) : ''}
+                onChange={(e) => onChange('vehiclePrice', parseFormatted(e.target.value))}
               />
             </div>
 
@@ -155,10 +161,12 @@ const LoanInputs: React.FC<Props> = ({
         <div className="input-group">
           <label>Down Payment ($)</label>
           <input
-            type="number"
+            type="text"
+            inputMode="numeric"
+            className="formatted-input"
             name="downPayment"
-            value={inputs.downPayment}
-            onChange={(e) => onChange('downPayment', parseFloat(e.target.value) || 0)}
+            value={inputs.downPayment ? fmt(inputs.downPayment) : ''}
+            onChange={(e) => onChange('downPayment', parseFormatted(e.target.value))}
             style={{ borderColor: isDownPaymentTooLow ? 'var(--error-color)' : '' }}
           />
           {results.minDownPaymentRequired > 0 && (
