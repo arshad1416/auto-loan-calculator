@@ -121,7 +121,7 @@ export function calculatorReducer(state: CalculatorState, action: CalculatorActi
       const finalInputs = {
         ...newInputs,
         apr: rulesResult.minApr,
-        termMonths: Math.min(newInputs.termMonths, rulesResult.maxTermAllowed),
+        termMonths: rulesResult.maxTermAllowed,
         downPayment: Math.max(newInputs.downPayment, rulesResult.minDownPaymentRequired),
       };
 
