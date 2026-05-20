@@ -1,8 +1,12 @@
 # ShiftLogic HQ — Auto Loan Calculator
 
-A dual-mode Ontario auto loan payment calculator built with React, TypeScript, and Vite. Computes bi-weekly and monthly payments using Ontario-specific taxes and lender rules, with a reverse mode that works backward from a target payment to the maximum affordable vehicle price.
+A dual-mode Ontario auto loan payment calculator built with React, TypeScript, and Vite. Computes bi-weekly and monthly payments using Ontario-specific taxes and lender rules, with a reverse mode to find your max affordable vehicle price.
 
 **[Live Demo](https://auto-loan-calculator.pages.dev)**
+
+## ⚠️ Disclaimer
+
+**The payments calculated by this tool are estimates only.** Actual payments, interest rates, loan terms, and down payment requirements are subject to lender approval and depend on your creditworthiness, credit history, and other factors. This calculator is for informational purposes only and should not be considered financial advice. Please consult with your lender for accurate loan terms and payments.
 
 ## Modes
 
@@ -87,7 +91,7 @@ The reverse calculator solves the standard loan payment formula for principal an
 2. **Taxable amount:** `(L + downPayment − licensingFee) / 1.13`
 3. **Max vehicle price:** `taxableAmount + tradeInValue − adminFee − omvicFee`
 
-When a minimum down payment percentage applies (2010–2015: 10%, pre-2010: 25%), a circular dependency arises — the down payment floor depends on the vehicle price, but the vehicle price is the output. This is resolved algebraically:
+When a minimum down payment percentage applies (2010–2015: 10%, pre-2010: 25%), a circular dependency arises — the down payment floor depends on the vehicle price, but the vehicle price is the unknown. The solution uses algebraic manipulation:
 
 `V = (L − licensingFee + (tradeIn − adminFee − omvicFee) × 1.13) / (1.13 − minDownPct)`
 
