@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import type { VehicleCondition } from '../lib/calculator';
 
 interface Vehicle {
@@ -37,13 +37,23 @@ type LoadState =
   | { status: 'empty' }
   | { status: 'error'; message: string; fallback?: ListingsResponse };
 
-const API_BASE = import.meta.env.VITE_LISTINGS_API || 'http://pi-lan:8000';
+const API_BASE = import.meta.env.VITE_LISTINGS_API || 'http://raspberrypi.local:8001';
 
 const fmtMileage = (km: number) =>
   km ? `${km.toLocaleString()} km` : '—';
 
 const VehicleListings: React.FC<Props> = ({ maxPrice, provinceCode, vehicleCondition, vehicleYear }) => {
   const [state, setState] = useState<LoadState>({ status: 'idle' });
+
+  const abortRef = useRef<AbortController | null>(null);
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      abortRef.current?.abort();
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    };
+  }, []);
 
   const fetchListings = async () => {
     setState({ status: 'loading' });
@@ -58,7 +68,9 @@ const VehicleListings: React.FC<Props> = ({ maxPrice, provinceCode, vehicleCondi
     });
 
     const controller = new AbortController();
+    abortRef.current = controller;
     const timeout = setTimeout(() => controller.abort(), 20000);
+    timeoutRef.current = timeout;
 
     try {
       const resp = await fetch(`${API_BASE}/api/listings?${params}`, {
@@ -77,9 +89,9 @@ const VehicleListings: React.FC<Props> = ({ maxPrice, provinceCode, vehicleCondi
       } else {
         setState({ status: 'loaded', data });
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       clearTimeout(timeout);
-      if (err.name === 'AbortError') {
+      if (err instanceof DOMException && err.name === 'AbortError') {
         setState({ status: 'error', message: 'Search timed out. Try again or expand your criteria.' });
       } else {
         setState({ status: 'error', message: 'Could not reach listing service. Try again later.' });
@@ -106,7 +118,7 @@ const VehicleListings: React.FC<Props> = ({ maxPrice, provinceCode, vehicleCondi
 
       {state.status === 'loading' && (
         <div style={{ textAlign: 'center', padding: '2rem' }}>
-          <div className="spinner" />
+          <div className="spinner" role="status" aria-label="Searching listings" />
           <div style={{ color: 'var(--text-secondary)', marginTop: '0.75rem' }}>
             Searching AutoTrader &amp; CarGurus...
           </div>
@@ -141,20 +153,19 @@ const VehicleListings: React.FC<Props> = ({ maxPrice, provinceCode, vehicleCondi
           )}
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-            {(state.status === 'loaded' ? state.data.results : state.fallback!.results).slice(0, 5).map((v, i) => (
+            {(state.status === 'loaded' ? state.data.results : state.fallback!.results).slice(0, 5).map((v) => (
               <a
-                key={i}
+                key={v.url}
                 href={v.url}
                 target="_blank"
                 rel="noopener noreferrer"
+                className="listing-card"
                 style={{
                   display: 'flex', justifyContent: 'space-between', alignItems: 'center',
                   padding: '0.75rem 1rem', border: '1px solid var(--panel-border)',
                   borderRadius: '10px', textDecoration: 'none', color: 'inherit',
                   transition: 'border-color 0.2s',
                 }}
-                onMouseEnter={(e) => (e.currentTarget.style.borderColor = 'var(--accent-color)')}
-                onMouseLeave={(e) => (e.currentTarget.style.borderColor = 'var(--panel-border)')}
               >
                 <div>
                   <div style={{ fontWeight: 700 }}>
