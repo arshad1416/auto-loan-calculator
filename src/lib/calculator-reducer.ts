@@ -91,10 +91,10 @@ export function syncURL(state: CalculatorState): void {
 
 const DEFAULTS: CalculationInput = {
   vehicleYear: new Date().getFullYear(),
-  vehiclePrice: 45000,
+  vehiclePrice: 0,
   tradeInValue: 0,
   lienAmount: 0,
-  downPayment: 5000,
+  downPayment: 0,
   apr: 6.99,
   termMonths: 84,
   licensingFee: 59,
