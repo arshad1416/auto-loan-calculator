@@ -1,6 +1,6 @@
 # ShiftLogic HQ — Auto Loan Calculator
 
-A dual-mode Canadian auto loan payment calculator built with React, TypeScript, and Vite. Available to users across Canada, it automatically calculates bi-weekly and monthly payments using province/territory-specific taxes, registration fees, and lender rules. Reverse mode helps you find the maximum affordable vehicle price.
+A dual-mode Canadian auto loan payment calculator built with React, TypeScript, and Vite. Calculates bi-weekly and monthly payments using province/territory-specific taxes, registration fees, and lender rules. Reverse mode finds the maximum affordable vehicle price from a target payment.
 
 **[Live Demo](https://auto-loan-calculator.pages.dev)**
 
@@ -10,18 +10,24 @@ A dual-mode Canadian auto loan payment calculator built with React, TypeScript, 
 
 ## Overview
 
-This calculator is **available to all users across Canada** and automatically adjusts calculations based on your province or territory of residence. It accounts for:
-- **Provincial/Territorial Sales Taxes**: GST, HST, PST, QST, and combined rates
-- **Registration Fees**: Automatically calculated based on province/territory
-- **Lender Rules**: Year-based APR, term, and down payment requirements vary by region
+This calculator works **across all Canadian provinces and territories** and automatically adjusts for:
+
+- **Sales Taxes**: HST (ON, NB, NS, PE, NL), GST+PST (QC, BC, SK, MB), or GST-only (AB, YT, NT, NU)
+- **BC Progressive PST**: 7%–20% across 5 price tiers
+- **Registration & Licensing Fees**: Province-specific defaults, manually adjustable
+- **Regulatory Fees**: OMVIC ($22 ON), AMVIC ($10 AB), VSA Levy ($10 BC)
+- **Dealer Admin Fee**: $2,000 applied in Ontario only
+- **Federal Luxury Tax**: Applies to new vehicles over $100,000 (lesser of 10% of price or 20% of excess)
+- **Negative Equity Cap**: Lien minus trade-in capped at 40% of vehicle price — excess added to minimum down payment
+- **Year-Based Lending Rules**: APR, max term, and down payment floor determined by vehicle year
 
 ## Modes
 
 ### Payment Mode (Forward)
-Enter a vehicle price and loan details to calculate bi-weekly and monthly payments, taxes, total interest, and a full amortization schedule. Calculations automatically adjust based on your selected province or territory.
+Enter a vehicle price and loan details to calculate bi-weekly and monthly payments, taxes, total interest, and a full amortization schedule. Select province, vehicle year, and condition (new/used) — calculations automatically adjust.
 
 ### Max Price Mode (Reverse)
-Enter a target bi-weekly or monthly payment to find the maximum vehicle price you can afford. Changing the vehicle year automatically adjusts the APR, term, and down payment minimum to match regional lender rules.
+Enter a target bi-weekly or monthly payment to find the maximum vehicle price you can afford. The binary search algorithm correctly handles non-linear BC PST rates and Federal Luxury Tax. Changing the vehicle year auto-adjusts APR, term, and down payment minimums.
 
 ## Screenshots
 
@@ -33,7 +39,7 @@ Enter a target bi-weekly or monthly payment to find the maximum vehicle price yo
 
 ## Provincial & Territorial Lending Rules
 
-Vehicle year determines the maximum loan term and minimum APR. Rules vary by province/territory:
+Vehicle year determines the maximum loan term, minimum APR, and down payment floor:
 
 | Vehicle Year | Max Term | Min APR | Min Down Payment | Bank Financeable |
 |---|---|---|---|---|
@@ -45,38 +51,55 @@ Vehicle year determines the maximum loan term and minimum APR. Rules vary by pro
 
 ## Taxes & Fees (Province/Territory-Specific)
 
-The calculator automatically computes:
-- **Sales Tax**: GST (5%), HST (13-15%), PST (7%), QST (9.975%), or combinations based on your province
-- **Registration & Licensing Fees**: Varies by province/territory
-- **Admin & Processing Fees**: Region-specific charges
+| Province | Code | Tax Type | Rate | Regulating Fee | Licensing |
+|---|---|---|---|---|---|
+| Ontario | ON | HST | 13% | $22 OMVIC | $59 |
+| Quebec | QC | GST + QST | 5% + 9.975% | — | $120 |
+| British Columbia | BC | GST + PST | 5% + 7%–20%¹ | $10 VSA | $150 |
+| Alberta | AB | GST | 5% | $10 AMVIC | $95 |
+| Saskatchewan | SK | GST + PST | 5% + 6% | — | $100 |
+| Manitoba | MB | GST + PST | 5% + 7% | — | $150 |
+| New Brunswick | NB | HST | 15% | — | $100 |
+| Nova Scotia | NS | HST | 15%² | — | $150 |
+| Prince Edward Island | PE | HST | 15% | — | $100 |
+| Newfoundland & Labrador | NL | HST | 15% | — | $180 |
+| Yukon | YT | GST | 5% | — | $100 |
+| Northwest Territories | NT | GST | 5% | — | $100 |
+| Nunavut | NU | GST | 5% | — | $100 |
 
-Trade-in value is applied pre-tax and reduces the taxable amount.
+¹ BC PST is progressive: 7% under $55K, 8% $55K–$56K, 9% $56K–$57K, 10% $57K–$125K, 15% $125K–$150K, 20% over $150K
+² NS HST was 14% before April 2025, now 15%
+
+Trade-in value is applied pre-tax and reduces the taxable amount. Licensing fee syncs to the province default when switching provinces.
 
 ## Features
 
-- **Province/Territory Selector** automatically adjusts taxes and registration fees
-- **Segmented pill toggle** switches between Payment and Max Price modes
-- **Bi-weekly amortization schedule** with period-by-period principal, interest, and balance
-- **Year change notifications** showing auto-adjusted APR, term, and down payment
-- **Dynamic down payment floor** — minimum dollar and percentage displayed, enforced with validation
-- **Thousand separators** on dollar inputs for readability
-- **Linked target payment inputs** — changing bi-weekly auto-calculates monthly and vice versa
-- **Editable loan term slider** in both modes (12-month steps, capped at year-rule maximum)
-- **URL state persistence** — shareable links that restore all inputs including province, mode, and target payments
+- **Province/Territory Selector** — auto-adjusts taxes, fees, and licensing
+- **Vehicle Condition** — new vs used; Federal Luxury Tax applies to new vehicles over $100K
+- **Segmented Pill Toggle** — switches between Payment and Max Price modes
+- **Bi-Weekly Amortization Schedule** — period-by-period principal, interest, and balance
+- **Auto-Adjustment Banner** — shows when year change clamps APR, term, or down payment (auto-dismiss 6s)
+- **Dynamic Down Payment Floor** — minimum dollar and percentage displayed, enforced with validation
+- **Negative Equity Display** — shows financed vs excess amounts when lien exceeds trade-in
+- **Luxury Tax Callout** — highlighted in metrics when applicable (new vehicles only)
+- **Thousand Separators** on dollar inputs for readability
+- **Linked Target Payment Inputs** — changing bi-weekly auto-calculates monthly and vice versa
+- **Editable Loan Term Slider** — 12-month steps, capped at year-rule maximum
+- **URL State Persistence** — shareable links restoring all inputs including province, condition, mode, and target payments
 
 ## Tech Stack
 
 - **React 19** with `useReducer` for state management
-- **TypeScript 6** with strict linting
+- **TypeScript 6** with strict type-checking
 - **Vite 8** for dev server and production builds
-- **Vitest** for unit testing (22 tests)
+- **Vitest 4** for unit testing (37 tests)
 - **Cloudflare Pages** for deployment
 
 ## Development
 
 ```bash
 npm install        # Install dependencies
-npm run dev        # Start dev server (localhost:5173)
+npm run dev        # Start dev server
 npm test           # Run tests (vitest)
 npm run build      # Type-check and production build
 ```
@@ -86,36 +109,21 @@ npm run build      # Type-check and production build
 All inputs sync to the URL for bookmarking and sharing:
 
 ```
-?province=ON&mode=reverse&year=2024&price=45000&trade=0&down=5000&apr=6.99&term=84&licensing=59&targetBiWeekly=500&targetMonthly=1083
+?prov=ON&cond=used&year=2024&price=45000&trade=0&lien=0&down=5000&apr=6.99&term=84&licensing=59&mode=reverse&targetBiWeekly=500&targetMonthly=1083
 ```
 
 Omitting `mode` (or setting it to anything other than `reverse`) defaults to Payment mode.
 
 ## How the Reverse Calculation Works
 
-The reverse calculator solves the standard loan payment formula for principal and works backward through provincial/territorial taxes and fees:
+The reverse calculator uses binary search (30 iterations over a $0–$2M range) to find the maximum vehicle price matching a target payment. Unlike algebraic inversion, this correctly handles:
 
-1. **Loan principal** from target payment: `L = P × ((1+r)ⁿ − 1) / (r(1+r)ⁿ)`
-2. **Taxable amount:** `(L + downPayment − licensingFee) / (1 + taxRate)`
-3. **Max vehicle price:** `taxableAmount + tradeInValue − adminFee − processingFee`
+- **BC Progressive PST** — rate depends on vehicle price (the unknown)
+- **Federal Luxury Tax** — triggers above $100K, changing the tax curve
+- **Negative Equity Cap** — 40% cap creates a floor that varies with price
+- **Year-Based Down Payment** — percentage floor that depends on the unknown price
 
-When a minimum down payment percentage applies (varies by region), a circular dependency arises — the down payment floor depends on the vehicle price, but the vehicle price is the unknown. The solution uses algebraic manipulation to solve for the maximum affordable vehicle price.
-
-## Supported Provinces & Territories
-
-- Alberta (AB)
-- British Columbia (BC)
-- Manitoba (MB)
-- New Brunswick (NB)
-- Newfoundland and Labrador (NL)
-- Northwest Territories (NT)
-- Nova Scotia (NS)
-- Nunavut (NU)
-- Ontario (ON)
-- Prince Edward Island (PE)
-- Quebec (QC)
-- Saskatchewan (SK)
-- Yukon (YT)
+Each iteration runs the full forward calculation, so all taxes, fees, caps, and rules are respected exactly.
 
 ## License
 

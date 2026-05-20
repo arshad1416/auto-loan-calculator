@@ -51,7 +51,7 @@ const App: React.FC = () => {
         <h1>
           SHIFT<span style={{ color: 'var(--accent-color)' }}>LOGIC</span> HQ
         </h1>
-        <p className="subtitle">Official Dealer Payment Calculator</p>
+        <p className="subtitle">Un-Official Dealer Payment Calculator</p>
       </header>
 
       {adjustmentMessage && (
