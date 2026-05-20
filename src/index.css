@@ -323,3 +323,24 @@ input[type="text"]:focus {
   font-size: 1.1rem;
   font-weight: 700;
 }
+
+/* Disclaimer */
+.disclaimer-container {
+  background: rgba(255, 133, 0, 0.08);
+  border: 1px solid rgba(255, 133, 0, 0.3);
+  border-radius: 1rem;
+  padding: 1.5rem;
+  margin-top: 3rem;
+  margin-bottom: 2rem;
+}
+
+.disclaimer-text {
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+  line-height: 1.6;
+  margin: 0;
+}
+
+.disclaimer-text strong {
+  color: var(--text-primary);
+}
