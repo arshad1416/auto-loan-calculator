@@ -266,3 +266,60 @@ table tbody td {
   color: var(--text-primary);
   background: rgba(255, 255, 255, 0.05);
 }
+
+/* Text inputs (formatted with commas) */
+input[type="text"] {
+  width: 100%;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--panel-border);
+  border-radius: 0.75rem;
+  padding: 0.75rem 1rem;
+  color: var(--text-primary);
+  font-family: var(--font-main);
+  font-size: 1.125rem;
+  transition: all 0.3s ease;
+}
+
+input[type="text"]:focus {
+  outline: none;
+  border-color: var(--accent-color);
+  box-shadow: 0 0 0 4px var(--accent-glow);
+}
+
+/* Metrics Grid */
+.metrics-grid {
+  border: 1px solid var(--panel-border);
+  border-radius: 1rem;
+  overflow: hidden;
+}
+
+.metrics-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.metrics-row:last-child {
+  border-bottom: none;
+}
+
+.metrics-row .metric {
+  padding: 1rem 1.25rem;
+}
+
+.metrics-row .metric:first-child {
+  border-right: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.metrics-row .metric label {
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 0.15rem;
+}
+
+.metrics-row .metric .metric-value {
+  font-size: 1.1rem;
+  font-weight: 700;
+}

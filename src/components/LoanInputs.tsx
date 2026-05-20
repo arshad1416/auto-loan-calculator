@@ -1,4 +1,5 @@
-import type { CalculationInput, CalculationResult } from '../lib/calculator';
+import type { CalculationInput, CalculationResult, VehicleCondition } from '../lib/calculator';
+import { PROVINCES } from '../lib/calculator';
 
 interface Props {
   inputs: CalculationInput;
@@ -6,7 +7,7 @@ interface Props {
   reverseMode: boolean;
   targetBiWeeklyPayment: number;
   targetMonthlyPayment: number;
-  onChange: (field: keyof CalculationInput, value: number) => void;
+  onChange: (field: keyof CalculationInput, value: number | string) => void;
   onYearChange: (year: number) => void;
   onToggleMode: () => void;
   onTargetBiWeeklyChange: (value: number) => void;
@@ -37,19 +38,32 @@ const LoanInputs: React.FC<Props> = ({
           className={!reverseMode ? 'active' : ''}
           onClick={() => reverseMode && onToggleMode()}
         >
-          Payment
+          Forward (Enter Price)
         </button>
         <button
           className={reverseMode ? 'active' : ''}
           onClick={() => !reverseMode && onToggleMode()}
         >
-          Max Price
+          Reverse (Enter Budget)
         </button>
       </div>
 
       <div className="input-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
+        {/* Province / Territory */}
+        <div className="input-group">
+          <label>Province / Territory</label>
+          <select
+            value={inputs.provinceCode || 'ON'}
+            onChange={(e) => onChange('provinceCode', e.target.value)}
+          >
+            {PROVINCES.map((p) => (
+              <option key={p.code} value={p.code}>{p.name} ({p.code})</option>
+            ))}
+          </select>
+        </div>
+
         {/* Vehicle Year */}
-        <div className="input-group" style={{ gridColumn: 'span 2' }}>
+        <div className="input-group">
           <label>Vehicle Year</label>
           <select
             value={inputs.vehicleYear}
@@ -61,15 +75,28 @@ const LoanInputs: React.FC<Props> = ({
           </select>
         </div>
 
+        {/* Vehicle Condition */}
+        <div className="input-group">
+          <label>Vehicle Condition</label>
+          <select
+            value={inputs.vehicleCondition || 'used'}
+            onChange={(e) => onChange('vehicleCondition', e.target.value as VehicleCondition)}
+          >
+            <option value="used">Used Vehicle</option>
+            <option value="new">New Vehicle</option>
+          </select>
+        </div>
+
         {reverseMode ? (
           <>
             {/* Target Bi-Weekly Payment */}
             <div className="input-group">
               <label>Target Bi-Weekly ($)</label>
               <input
-                type="number"
-                value={targetBiWeeklyPayment || ''}
-                onChange={(e) => onTargetBiWeeklyChange(parseFloat(e.target.value) || 0)}
+                type="text"
+                inputMode="numeric"
+                value={targetBiWeeklyPayment ? fmt(targetBiWeeklyPayment) : ''}
+                onChange={(e) => onTargetBiWeeklyChange(parseFormatted(e.target.value))}
               />
             </div>
 
@@ -77,9 +104,10 @@ const LoanInputs: React.FC<Props> = ({
             <div className="input-group">
               <label>Target Monthly ($)</label>
               <input
-                type="number"
-                value={targetMonthlyPayment || ''}
-                onChange={(e) => onTargetMonthlyChange(parseFloat(e.target.value) || 0)}
+                type="text"
+                inputMode="numeric"
+                value={targetMonthlyPayment ? fmt(targetMonthlyPayment) : ''}
+                onChange={(e) => onTargetMonthlyChange(parseFormatted(e.target.value))}
               />
             </div>
 
@@ -97,9 +125,9 @@ const LoanInputs: React.FC<Props> = ({
               </div>
             </div>
 
-            {/* Term (editable slider, starts at max) */}
+            {/* Term (editable slider) */}
             <div className="input-group">
-              <label>Loan Term: {inputs.termMonths} Months ({Math.round(inputs.termMonths / 12)} Years)</label>
+              <label>Loan Term: {inputs.termMonths} mo ({Math.round(inputs.termMonths / 12)} yr)</label>
               <input
                 type="range"
                 name="termMonths"
@@ -147,28 +175,6 @@ const LoanInputs: React.FC<Props> = ({
           </>
         )}
 
-        {/* Trade-In Value */}
-        <div className="input-group">
-          <label>Trade-In Value ($)</label>
-          <input
-            type="number"
-            name="tradeInValue"
-            value={inputs.tradeInValue}
-            onChange={(e) => onChange('tradeInValue', parseFloat(e.target.value) || 0)}
-          />
-        </div>
-
-        {/* Lien Amount (outstanding loan on trade-in) */}
-        <div className="input-group">
-          <label>Lien on Trade-In ($)</label>
-          <input
-            type="number"
-            name="lienAmount"
-            value={inputs.lienAmount}
-            onChange={(e) => onChange('lienAmount', parseFloat(e.target.value) || 0)}
-          />
-        </div>
-
         {/* Down Payment */}
         <div className="input-group">
           <label>Down Payment ($)</label>
@@ -187,26 +193,51 @@ const LoanInputs: React.FC<Props> = ({
               fontSize: '0.7rem',
               marginTop: '0.2rem',
             }}>
-              Min {Math.round(results.minDownPaymentRequired / (reverseMode ? results.maxVehiclePrice : inputs.vehiclePrice) * 100)}% Required: ${results.minDownPaymentRequired.toLocaleString()}
+              Min Down Required: ${results.minDownPaymentRequired.toLocaleString()}
             </div>
           )}
+        </div>
+
+        {/* Trade-In Value */}
+        <div className="input-group">
+          <label>Trade-In Value ($)</label>
+          <input
+            type="text"
+            inputMode="numeric"
+            name="tradeInValue"
+            value={inputs.tradeInValue ? fmt(inputs.tradeInValue) : ''}
+            onChange={(e) => onChange('tradeInValue', parseFormatted(e.target.value))}
+          />
+        </div>
+
+        {/* Lien on Trade-In */}
+        <div className="input-group">
+          <label>Lien on Trade-In ($)</label>
+          <input
+            type="text"
+            inputMode="numeric"
+            name="lienAmount"
+            value={inputs.lienAmount ? fmt(inputs.lienAmount) : ''}
+            onChange={(e) => onChange('lienAmount', parseFormatted(e.target.value))}
+          />
         </div>
 
         {/* Licensing Fee */}
         <div className="input-group">
           <label>Licensing Fee ($)</label>
           <input
-            type="number"
+            type="text"
+            inputMode="numeric"
             name="licensingFee"
-            value={inputs.licensingFee}
-            onChange={(e) => onChange('licensingFee', parseFloat(e.target.value) || 0)}
+            value={inputs.licensingFee ? fmt(inputs.licensingFee) : ''}
+            onChange={(e) => onChange('licensingFee', parseFormatted(e.target.value))}
           />
         </div>
 
         {/* Forward mode: Term slider */}
         {!reverseMode && (
-          <div className="input-group" style={{ gridColumn: 'span 2' }}>
-            <label>Loan Term: {inputs.termMonths} Months ({Math.round(inputs.termMonths / 12)} Years)</label>
+          <div className="input-group">
+            <label>Loan Term: {inputs.termMonths} mo ({Math.round(inputs.termMonths / 12)} yr)</label>
             <input
               type="range"
               name="termMonths"
@@ -214,11 +245,11 @@ const LoanInputs: React.FC<Props> = ({
               max={84}
               step={12}
               value={inputs.termMonths}
-              onChange={(e) => onChange('termMonths', parseFloat(e.target.value) || 12)}
+              onChange={(e) => onChange('termMonths', parseInt(e.target.value) || 12)}
             />
             <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '0.5rem', fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
               <span>12 mo</span>
-              <span style={{ color: isTermTooLong ? 'var(--error-color)' : '' }}>84 mo (7 yr max)</span>
+              <span style={{ color: isTermTooLong ? 'var(--error-color)' : '' }}>84 mo (7 yr)</span>
             </div>
             {isTermTooLong && (
               <div style={{ color: 'var(--error-color)', fontSize: '0.75rem', marginTop: '0.5rem' }}>
