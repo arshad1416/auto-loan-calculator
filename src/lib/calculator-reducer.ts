@@ -129,8 +129,8 @@ function runReverseCalc(state: CalculatorState, overrides: Partial<CalculatorSta
 
 // ── Initial state ───────────────────────────────────────────────────
 
-export function createInitialState(): CalculatorState {
-  const urlOverrides = readParams();
+export function createInitialState(skipUrl = false): CalculatorState {
+  const urlOverrides = skipUrl ? {} : readParams();
   const inputs = { ...DEFAULTS, ...urlOverrides };
 
   // Sync licensing fee to province default if URL didn't explicitly set it
@@ -346,7 +346,8 @@ export function calculatorReducer(state: CalculatorState, action: CalculatorActi
     }
 
     case 'RESET':
-      return createInitialState();
+      window.history.replaceState(null, '', window.location.pathname);
+      return createInitialState(true);
 
     default:
       return state;
