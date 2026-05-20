@@ -1,4 +1,4 @@
-import { calculateAutoLoan, reverseCalculateAutoLoan } from './calculator';
+import { calculateAutoLoan, reverseCalculateAutoLoan, PROVINCES } from './calculator';
 import type { CalculationInput, CalculationResult } from './calculator';
 
 // ── Types ───────────────────────────────────────────────────────────
@@ -114,6 +114,13 @@ function runReverseCalc(state: CalculatorState, overrides: Partial<CalculatorSta
 export function createInitialState(): CalculatorState {
   const urlOverrides = readParams();
   const inputs = { ...DEFAULTS, ...urlOverrides };
+
+  // Sync licensing fee to province default if URL didn't explicitly set it
+  if (urlOverrides.licensingFee === undefined && inputs.provinceCode) {
+    const province = PROVINCES.find(p => p.code === inputs.provinceCode);
+    if (province) inputs.licensingFee = province.defaultLicensingFee;
+  }
+
   const results = calculateAutoLoan(inputs);
   inputs.apr = results.minApr;
   inputs.termMonths = Math.min(inputs.termMonths, results.maxTermAllowed);
@@ -151,7 +158,11 @@ export function calculatorReducer(state: CalculatorState, action: CalculatorActi
   switch (action.type) {
     case 'SET_FIELD': {
       if (state.reverseMode) {
-        const newInputs = { ...state.inputs, [action.field]: action.value };
+        let newInputs = { ...state.inputs, [action.field]: action.value };
+        if (action.field === 'provinceCode' && typeof action.value === 'string') {
+          const province = PROVINCES.find(p => p.code === action.value);
+          if (province) newInputs = { ...newInputs, licensingFee: province.defaultLicensingFee };
+        }
         const newState = { ...state, inputs: newInputs };
         const results = runReverseCalc(newState, {});
         return {
@@ -161,7 +172,11 @@ export function calculatorReducer(state: CalculatorState, action: CalculatorActi
           adjustments: null,
         };
       }
-      const newInputs = { ...state.inputs, [action.field]: action.value };
+      let newInputs = { ...state.inputs, [action.field]: action.value };
+      if (action.field === 'provinceCode' && typeof action.value === 'string') {
+        const province = PROVINCES.find(p => p.code === action.value);
+        if (province) newInputs = { ...newInputs, licensingFee: province.defaultLicensingFee };
+      }
       return {
         ...state,
         inputs: newInputs,
