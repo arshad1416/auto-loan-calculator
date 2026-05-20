@@ -142,8 +142,8 @@ export function computeAmortization(
   return schedule;
 }
 
-export function computeAcceleratedAmortization(
-  loanPrincipal: number, apr: number, termMonths: number, biWeeklyPayment: number, extraPayment: number
+export function computeLumpSumAmortization(
+  loanPrincipal: number, apr: number, termMonths: number, biWeeklyPayment: number, extraPayments: Record<number, number>
 ): { schedule: AmortizationPeriod[]; periodsSaved: number; interestSaved: number } {
   const schedule: AmortizationPeriod[] = [];
   const biWeeklyRate = apr / 100 / 26;
@@ -153,18 +153,19 @@ export function computeAcceleratedAmortization(
 
   for (let i = 1; i <= maxPeriods; i++) {
     const interestPayment = currentBalance * biWeeklyRate;
-    const totalPayment = biWeeklyPayment + extraPayment;
-    const principalPayment = Math.min(currentBalance, totalPayment - interestPayment);
-    const actualPayment = principalPayment + interestPayment;
-    currentBalance = Math.max(0, currentBalance - principalPayment);
+    const standardPrincipal = Math.min(currentBalance, biWeeklyPayment - interestPayment);
+    const extraAmount = extraPayments[i] || 0;
+    const totalPrincipal = Math.min(currentBalance, standardPrincipal + extraAmount);
+    const actualPayment = standardPrincipal + interestPayment + extraAmount;
+    currentBalance = Math.max(0, currentBalance - totalPrincipal);
     totalInterestPaid += interestPayment;
     schedule.push({
       period: i,
       payment: actualPayment,
-      principal: principalPayment,
+      principal: totalPrincipal,
       interest: interestPayment,
       balance: currentBalance,
-      extraPayment: extraPayment,
+      extraPayment: extraAmount > 0 ? extraAmount : undefined,
     });
     if (currentBalance <= 0) break;
   }
