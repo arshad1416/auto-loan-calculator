@@ -16,7 +16,9 @@ This calculator works **across all Canadian provinces and territories** and auto
 - **BC Progressive PST**: 7%–20% across 5 price tiers
 - **Registration & Licensing Fees**: Province-specific defaults, manually adjustable
 - **Regulatory Fees**: OMVIC ($22 ON), AMVIC ($10 AB), VSA Levy ($10 BC)
-- **Dealer Admin Fee**: $2,000 applied in Ontario only
+- **Lender Admin Fee**: $2,000 default in Ontario, $0 elsewhere (user-editable)
+- **Dealer Admin Fee**: User-editable, distinct from the lender fee
+- **Additional Fees & Products**: Warranty, Safety Certification, and Other Fees — all user-editable and taxable
 - **Federal Luxury Tax**: Applies to new vehicles over $100,000 (lesser of 10% of price or 20% of excess)
 - **Negative Equity Cap**: Lien minus trade-in capped at 40% of vehicle price — excess added to minimum down payment
 - **Year-Based Lending Rules**: APR, max term, and down payment floor determined by vehicle year
@@ -74,10 +76,13 @@ Trade-in value is applied pre-tax and reduces the taxable amount. Licensing fee 
 
 ## Features
 
-- **Province/Territory Selector** — auto-adjusts taxes, fees, and licensing
+- **Province/Territory Selector** — auto-adjusts taxes, fees, licensing, and lender admin fee
 - **Vehicle Condition** — new vs used; Federal Luxury Tax applies to new vehicles over $100K
 - **Segmented Pill Toggle** — switches between Payment and Max Price modes
-- **Bi-Weekly Amortization Schedule** — period-by-period principal, interest, and balance
+- **User-Editable Additional Fees** — Lender Admin Fee, Dealer Admin Fee, Warranty, Safety Certification, Other Fees; all taxable per CRA rules
+- **Bi-Weekly Amortization Schedule** — period-by-period principal, interest, and balance with thousand separators
+- **Per-Period Lump-Sum Extra Payments** — editable column on each amortization row; recalculates subsequent periods and shows periods/interest saved
+- **Responsive Design** — CSS breakpoints at 1024px, 768px, and 480px for desktop, tablet, and mobile
 - **Auto-Adjustment Banner** — shows when year change clamps APR, term, or down payment (auto-dismiss 6s)
 - **Dynamic Down Payment Floor** — minimum dollar and percentage displayed, enforced with validation
 - **Negative Equity Display** — shows financed vs excess amounts when lien exceeds trade-in
@@ -85,14 +90,14 @@ Trade-in value is applied pre-tax and reduces the taxable amount. Licensing fee 
 - **Thousand Separators** on dollar inputs for readability
 - **Linked Target Payment Inputs** — changing bi-weekly auto-calculates monthly and vice versa
 - **Editable Loan Term Slider** — 12-month steps, capped at year-rule maximum
-- **URL State Persistence** — shareable links restoring all inputs including province, condition, mode, and target payments
+- **URL State Persistence** — shareable links restoring all inputs including province, condition, mode, target payments, and all fee fields
 
 ## Tech Stack
 
 - **React 19** with `useReducer` for state management
 - **TypeScript 6** with strict type-checking
 - **Vite 8** for dev server and production builds
-- **Vitest 4** for unit testing (37 tests)
+- **Vitest 4** for unit testing (47 tests)
 - **Cloudflare Pages** for deployment
 
 ## Development
@@ -109,7 +114,7 @@ npm run build      # Type-check and production build
 All inputs sync to the URL for bookmarking and sharing:
 
 ```
-?prov=ON&cond=used&year=2024&price=45000&trade=0&lien=0&down=5000&apr=6.99&term=84&licensing=59&mode=reverse&targetBiWeekly=500&targetMonthly=1083
+?prov=ON&cond=used&year=2024&price=45000&trade=0&lien=0&down=5000&apr=6.99&term=84&licensing=59&lender=2000&admin=0&warranty=0&safety=0&otherFees=0&mode=reverse&targetBiWeekly=500&targetMonthly=1083
 ```
 
 Omitting `mode` (or setting it to anything other than `reverse`) defaults to Payment mode.
