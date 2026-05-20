@@ -20,7 +20,7 @@ export interface CalculatorState {
 }
 
 export type CalculatorAction =
-  | { type: 'SET_FIELD'; field: keyof CalculationInput; value: number }
+  | { type: 'SET_FIELD'; field: keyof CalculationInput; value: number | string }
   | { type: 'SET_YEAR'; year: number }
   | { type: 'TOGGLE_SCHEDULE' }
   | { type: 'DISMISS_ADJUSTMENTS' }
