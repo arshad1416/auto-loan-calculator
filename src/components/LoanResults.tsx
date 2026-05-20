@@ -72,6 +72,27 @@ const LoanResults: React.FC<Props> = ({ results, reverseMode }) => (
       </div>
     </div>
 
+    {(results.financedNegativeEquity > 0 || results.excessNegativeEquity > 0) && (
+      <div style={{
+        padding: '0.75rem 1rem',
+        background: results.excessNegativeEquity > 0 ? 'rgba(234, 67, 53, 0.08)' : 'rgba(52, 168, 83, 0.06)',
+        borderRadius: '8px',
+        fontSize: '0.8rem',
+        color: 'var(--text-secondary)',
+        lineHeight: '1.5',
+      }}>
+        <div style={{ fontWeight: '600', color: results.excessNegativeEquity > 0 ? 'var(--error-color)' : 'var(--text-primary)', marginBottom: '0.25rem' }}>
+          Negative Equity (Lien − Trade-In)
+        </div>
+        ${results.financedNegativeEquity.toLocaleString()} rolled into financing
+        {results.excessNegativeEquity > 0 && (
+          <div style={{ color: 'var(--error-color)', marginTop: '0.25rem' }}>
+            ${results.excessNegativeEquity.toLocaleString()} exceeds 40% cap — added to minimum down payment
+          </div>
+        )}
+      </div>
+    )}
+
     <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', textAlign: 'center', opacity: 0.7 }}>
       Includes {'$' + (results.licensingFee || 56).toLocaleString()} Licensing, $22 OMVIC, $2,000 Admin
     </div>

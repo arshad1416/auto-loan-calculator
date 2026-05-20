@@ -158,6 +158,17 @@ const LoanInputs: React.FC<Props> = ({
           />
         </div>
 
+        {/* Lien Amount (outstanding loan on trade-in) */}
+        <div className="input-group">
+          <label>Lien on Trade-In ($)</label>
+          <input
+            type="number"
+            name="lienAmount"
+            value={inputs.lienAmount}
+            onChange={(e) => onChange('lienAmount', parseFloat(e.target.value) || 0)}
+          />
+        </div>
+
         {/* Down Payment */}
         <div className="input-group">
           <label>Down Payment ($)</label>

@@ -6,6 +6,7 @@ const baseInput: CalculationInput = {
   vehicleYear: 2024,
   vehiclePrice: 45000,
   tradeInValue: 0,
+  lienAmount: 0,
   downPayment: 5000,
   apr: 6.99,
   termMonths: 84,
@@ -138,36 +139,191 @@ describe('calculateAutoLoan', () => {
     const r = calculateAutoLoan({ ...baseInput, tradeInValue: 50000 });
     expect(r.loanPrincipal).toBeLessThan(1000); // essentially zero after fees
   });
+
+  it('lien amount increases loan principal by the lien amount', () => {
+    const noLien = calculateAutoLoan(baseInput);
+    const withLien = calculateAutoLoan({ ...baseInput, lienAmount: 5000 });
+    // lien 5000, tradeIn 0 → netTradeEffect = 5000 (negative equity)
+    expect(withLien.loanPrincipal).toBeCloseTo(noLien.loanPrincipal + 5000, 1);
+    expect(withLien.financedNegativeEquity).toBe(5000);
+    expect(withLien.excessNegativeEquity).toBe(0);
+  });
+
+  it('positive equity (tradeIn > lien) reduces loan principal', () => {
+    // tradeIn 15000, lien 5000 → netTradeEffect = -10000 (positive equity of $10k)
+    const r = calculateAutoLoan({ ...baseInput, tradeInValue: 15000, lienAmount: 5000 });
+    const noTrade = calculateAutoLoan(baseInput);
+    // Loan should be lower than base because $10k positive equity offsets the loan
+    expect(r.loanPrincipal).toBeLessThan(noTrade.loanPrincipal - 8000);
+    expect(r.financedNegativeEquity).toBe(0);
+    expect(r.excessNegativeEquity).toBe(0);
+  });
+
+  it('lien over 40% cap: only capped amount financed, excess increases min down payment', () => {
+    // 40% of $45,000 = $18,000. Lien of $25,000 → $7,000 excess
+    const r = calculateAutoLoan({ ...baseInput, lienAmount: 25000 });
+    expect(r.financedNegativeEquity).toBe(18000);
+    expect(r.excessNegativeEquity).toBe(7000);
+    expect(r.minDownPaymentRequired).toBe(7000); // comes from excess, not year rules
+  });
+
+  it('lien over 40% cap: excess adds to year-based min down payment', () => {
+    // 2014 vehicle: 10% min down on $30,000 = $3,000
+    // 40% cap on $30,000 = $12,000. Lien of $20,000 → $8,000 excess
+    // minDownPaymentRequired = max($3,000, $8,000) = $8,000
+    const r = calculateAutoLoan({ ...baseInput, vehicleYear: 2014, vehiclePrice: 30000, lienAmount: 20000 });
+    expect(r.financedNegativeEquity).toBe(12000);
+    expect(r.excessNegativeEquity).toBe(8000);
+    expect(r.minDownPaymentRequired).toBe(8000);
+    // Loan principal uses capped lien ($12,000), not full $20,000
+    expect(r.loanPrincipal).toBeGreaterThan(0);
+  });
 });
 
 describe('reverseCalculateAutoLoan', () => {
   it('calculates max vehicle price from target bi-weekly payment', () => {
-    const r = reverseCalculateAutoLoan({ targetBiWeeklyPayment: 500, targetMonthlyPayment: 0, vehicleYear: 2024, tradeInValue: 0, downPayment: 0, termMonths: 84, licensingFee: 56 });
+    const r = reverseCalculateAutoLoan({ targetBiWeeklyPayment: 500, targetMonthlyPayment: 0, vehicleYear: 2024, tradeInValue: 0, lienAmount: 0, downPayment: 0, termMonths: 84, licensingFee: 56 });
     expect(r.maxVehiclePrice).toBeGreaterThan(60000);
     expect(r.maxVehiclePrice).toBeLessThan(63000);
     expect(r.biWeeklyPayment).toBeCloseTo(500, 0);
   });
   it('converts target monthly to bi-weekly automatically', () => {
-    const r = reverseCalculateAutoLoan({ targetBiWeeklyPayment: 0, targetMonthlyPayment: 1000, vehicleYear: 2024, tradeInValue: 0, downPayment: 0, termMonths: 84, licensingFee: 56 });
+    const r = reverseCalculateAutoLoan({ targetBiWeeklyPayment: 0, targetMonthlyPayment: 1000, vehicleYear: 2024, tradeInValue: 0, lienAmount: 0, downPayment: 0, termMonths: 84, licensingFee: 56 });
     expect(r.biWeeklyPayment).toBeCloseTo(461.54, 0);
   });
   it('2014 vehicle gets 14.99% APR, 66mo max term with 10% down floor', () => {
-    const r = reverseCalculateAutoLoan({ targetBiWeeklyPayment: 400, targetMonthlyPayment: 0, vehicleYear: 2014, tradeInValue: 0, downPayment: 0, termMonths: 66, licensingFee: 56 });
+    const r = reverseCalculateAutoLoan({ targetBiWeeklyPayment: 400, targetMonthlyPayment: 0, vehicleYear: 2014, tradeInValue: 0, lienAmount: 0, downPayment: 0, termMonths: 66, licensingFee: 56 });
     expect(r.maxTermAllowed).toBe(66);
     expect(r.minApr).toBe(14.99);
     expect(r.loanPrincipal).toBeGreaterThan(0);
     expect(r.schedule.length).toBeGreaterThan(0);
   });
   it('pre-2010 vehicle gets 19.99% APR, 48mo, 25% down floor', () => {
-    const r = reverseCalculateAutoLoan({ targetBiWeeklyPayment: 300, targetMonthlyPayment: 0, vehicleYear: 2008, tradeInValue: 0, downPayment: 0, termMonths: 48, licensingFee: 56 });
+    const r = reverseCalculateAutoLoan({ targetBiWeeklyPayment: 300, targetMonthlyPayment: 0, vehicleYear: 2008, tradeInValue: 0, lienAmount: 0, downPayment: 0, termMonths: 48, licensingFee: 56 });
     expect(r.maxTermAllowed).toBe(48);
     expect(r.minApr).toBe(19.99);
     expect(r.isBankFinancable).toBe(false);
   });
   it('shorter term reduces max vehicle price', () => {
-    const r66 = reverseCalculateAutoLoan({ targetBiWeeklyPayment: 400, targetMonthlyPayment: 0, vehicleYear: 2014, tradeInValue: 0, downPayment: 0, termMonths: 66, licensingFee: 56 });
-    const r48 = reverseCalculateAutoLoan({ targetBiWeeklyPayment: 400, targetMonthlyPayment: 0, vehicleYear: 2014, tradeInValue: 0, downPayment: 0, termMonths: 48, licensingFee: 56 });
+    const r66 = reverseCalculateAutoLoan({ targetBiWeeklyPayment: 400, targetMonthlyPayment: 0, vehicleYear: 2014, tradeInValue: 0, lienAmount: 0, downPayment: 0, termMonths: 66, licensingFee: 56 });
+    const r48 = reverseCalculateAutoLoan({ targetBiWeeklyPayment: 400, targetMonthlyPayment: 0, vehicleYear: 2014, tradeInValue: 0, lienAmount: 0, downPayment: 0, termMonths: 48, licensingFee: 56 });
     expect(r48.maxVehiclePrice).toBeLessThan(r66.maxVehiclePrice);
     expect(r48.biWeeklyPayment).toBeCloseTo(400, 0);
+  });
+
+  it('lien over 40% cap reduces max vehicle price in reverse mode', () => {
+    const noLien = reverseCalculateAutoLoan({ targetBiWeeklyPayment: 400, targetMonthlyPayment: 0, vehicleYear: 2024, tradeInValue: 0, lienAmount: 0, downPayment: 0, termMonths: 84, licensingFee: 56 });
+    const withLien = reverseCalculateAutoLoan({ targetBiWeeklyPayment: 400, targetMonthlyPayment: 0, vehicleYear: 2024, tradeInValue: 0, lienAmount: 15000, downPayment: 0, termMonths: 84, licensingFee: 56 });
+    // Lien exceeding 40% cap should reduce maxPrice since less negative equity is financeable
+    expect(withLien.maxVehiclePrice).toBeLessThan(noLien.maxVehiclePrice);
+  });
+});
+
+describe('Province-specific calculations', () => {
+  it('calculates correct tax for Alberta (5% GST only, $10 AMVIC levy, $0 admin fee)', () => {
+    // Alberta code is AB. GST = 5%, PST = 0. Admin fee = 0. Regulating fee = 10.
+    // taxable base = 45000 - 0 + 0 + 10 = 45010
+    // GST = 45010 * 0.05 = 2250.5
+    // PST = 0
+    const r = calculateAutoLoan({ ...baseInput, provinceCode: 'AB' });
+    expect(r.gst).toBeCloseTo(2250.5, 1);
+    expect(r.pst).toBe(0);
+    expect(r.hst).toBeCloseTo(2250.5, 1); // hst is combined tax field
+  });
+
+  it('calculates correct tax for British Columbia (5% GST + progressive PST, $10 VSA levy, $0 admin fee)', () => {
+    // BC code is BC.
+    // Price = 45000 (< 55000) -> PST = 7%. Regulating fee = 10. Admin fee = 0.
+    // taxable base = 45000 - 0 + 0 + 10 = 45010
+    // GST = 45010 * 0.05 = 2250.5
+    // PST = 45010 * 0.07 = 3150.7
+    // Total Tax = 5401.2
+    const r = calculateAutoLoan({ ...baseInput, provinceCode: 'BC' });
+    expect(r.gst).toBeCloseTo(2250.5, 1);
+    expect(r.pst).toBeCloseTo(3150.7, 1);
+    expect(r.hst).toBeCloseTo(5401.2, 1);
+  });
+
+  it('handles progressive BC PST rates for high-end vehicles ($0 admin fee, used = no luxury tax)', () => {
+    // Price = 130000 -> BC PST rate is 15%. Admin fee = 0. Regulating fee = 10.
+    // No luxury tax (used vehicle by default)
+    // taxable base = 130000 - 0 + 0 + 10 = 130010
+    // GST = 130010 * 0.05 = 6500.5
+    // PST = 130010 * 0.15 = 19501.5
+    // Total Tax = 26002.0
+    const r = calculateAutoLoan({ ...baseInput, vehiclePrice: 130000, provinceCode: 'BC' });
+    expect(r.luxuryTax).toBe(0);
+    expect(r.gst).toBeCloseTo(6500.5, 1);
+    expect(r.pst).toBeCloseTo(19501.5, 1);
+    expect(r.hst).toBeCloseTo(26002.0, 1);
+  });
+
+  it('runs reverse calculation correctly in BC with progressive PST rates', () => {
+    // Test reverse calculation with target bi-weekly payment in BC
+    const r = reverseCalculateAutoLoan({
+      targetBiWeeklyPayment: 500,
+      targetMonthlyPayment: 0,
+      vehicleYear: 2024,
+      tradeInValue: 0,
+      lienAmount: 0,
+      downPayment: 0,
+      termMonths: 84,
+      licensingFee: 150,
+      provinceCode: 'BC',
+    });
+    expect(r.maxVehiclePrice).toBeGreaterThan(50000);
+    expect(r.biWeeklyPayment).toBeCloseTo(500, 0);
+  });
+});
+
+describe('Federal Luxury Tax', () => {
+  it('applies 0 luxury tax to used vehicles even above $100,000', () => {
+    const r = calculateAutoLoan({ ...baseInput, vehiclePrice: 150000, vehicleCondition: 'used' });
+    expect(r.luxuryTax).toBe(0);
+  });
+
+  it('applies 0 luxury tax when vehicleCondition is not set (defaults to used)', () => {
+    const r = calculateAutoLoan({ ...baseInput, vehiclePrice: 150000 });
+    expect(r.luxuryTax).toBe(0);
+  });
+
+  it('applies 0 luxury tax to new vehicles priced at or below $100,000', () => {
+    const r = calculateAutoLoan({ ...baseInput, vehiclePrice: 95000, vehicleCondition: 'new' });
+    expect(r.luxuryTax).toBe(0);
+  });
+
+  it('applies luxury tax to new vehicles above $100,000 (lesser of 10% or 20% of excess)', () => {
+    // Vehicle price = 110,000, new
+    // 10% of 110,000 = 11,000
+    // 20% of (110,000 - 100,000) = 2,000
+    // Lesser is 2,000
+    const r = calculateAutoLoan({ ...baseInput, vehiclePrice: 110000, provinceCode: 'ON', vehicleCondition: 'new' });
+    expect(r.luxuryTax).toBeCloseTo(2000, 1);
+  });
+
+  it('applies 10% luxury tax rate class for extremely high-end new vehicles', () => {
+    // Vehicle price = 250,000, new
+    // 10% of 250,000 = 25,000
+    // 20% of 150,000 = 30,000
+    // Lesser is 25,000
+    const r = calculateAutoLoan({ ...baseInput, vehiclePrice: 250000, provinceCode: 'ON', vehicleCondition: 'new' });
+    expect(r.luxuryTax).toBeCloseTo(25000, 1);
+  });
+
+  it('calculates reverse loan price correctly when luxury tax is triggered on new vehicle', () => {
+    const r = reverseCalculateAutoLoan({
+      targetBiWeeklyPayment: 1200,
+      targetMonthlyPayment: 0,
+      vehicleYear: 2024,
+      tradeInValue: 0,
+      lienAmount: 0,
+      downPayment: 10000,
+      termMonths: 84,
+      licensingFee: 59,
+      provinceCode: 'ON',
+      vehicleCondition: 'new',
+    });
+    expect(r.maxVehiclePrice).toBeGreaterThan(100000);
+    expect(r.biWeeklyPayment).toBeCloseTo(1200, 0);
   });
 });
