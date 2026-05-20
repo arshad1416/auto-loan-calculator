@@ -268,6 +268,51 @@ const LoanInputs: React.FC<Props> = ({
           </div>
         )}
       </div>
+
+      {/* Additional Fees & Products */}
+      <div style={{ marginTop: '2rem', paddingTop: '1.5rem', borderTop: '1px solid var(--panel-border)' }}>
+        <label style={{ marginBottom: '1rem', color: 'var(--text-primary)', fontSize: '0.9rem', fontWeight: 600 }}>
+          Additional Fees & Products (all taxable)
+        </label>
+        <div className="input-grid">
+          <div className="input-group">
+            <label>Dealer Admin Fee ($)</label>
+            <input
+              type="text"
+              inputMode="numeric"
+              value={inputs.dealerAdminFee ? fmt(inputs.dealerAdminFee) : ''}
+              onChange={(e) => onChange('dealerAdminFee', parseFormatted(e.target.value))}
+            />
+          </div>
+          <div className="input-group">
+            <label>Warranty ($)</label>
+            <input
+              type="text"
+              inputMode="numeric"
+              value={inputs.warranty ? fmt(inputs.warranty) : ''}
+              onChange={(e) => onChange('warranty', parseFormatted(e.target.value))}
+            />
+          </div>
+          <div className="input-group">
+            <label>Safety Certification ($)</label>
+            <input
+              type="text"
+              inputMode="numeric"
+              value={inputs.safetyCertification ? fmt(inputs.safetyCertification) : ''}
+              onChange={(e) => onChange('safetyCertification', parseFormatted(e.target.value))}
+            />
+          </div>
+          <div className="input-group">
+            <label>Other Fees / Products ($)</label>
+            <input
+              type="text"
+              inputMode="numeric"
+              value={inputs.otherFees ? fmt(inputs.otherFees) : ''}
+              onChange={(e) => onChange('otherFees', parseFormatted(e.target.value))}
+            />
+          </div>
+        </div>
+      </div>
     </div>
   );
 };

@@ -327,3 +327,106 @@ describe('Federal Luxury Tax', () => {
     expect(r.biWeeklyPayment).toBeCloseTo(1200, 0);
   });
 });
+
+describe('Additional fees & products', () => {
+  it('dealer admin fee defaults to $2,000 in Ontario', () => {
+    const r = calculateAutoLoan({ ...baseInput, provinceCode: 'ON' });
+    expect(r.dealerAdminFee).toBe(2000);
+  });
+
+  it('dealer admin fee defaults to $0 outside Ontario', () => {
+    const r = calculateAutoLoan({ ...baseInput, provinceCode: 'BC' });
+    expect(r.dealerAdminFee).toBe(0);
+  });
+
+  it('dealer admin fee can be overridden', () => {
+    const r = calculateAutoLoan({ ...baseInput, provinceCode: 'ON', dealerAdminFee: 500 });
+    expect(r.dealerAdminFee).toBe(500);
+    // Taxable amount should be lower with reduced admin fee
+    const rDefault = calculateAutoLoan({ ...baseInput, provinceCode: 'ON' });
+    expect(r.hst).toBeLessThan(rDefault.hst);
+  });
+
+  it('warranty is added to taxable amount and taxed', () => {
+    const noWarranty = calculateAutoLoan(baseInput);
+    const withWarranty = calculateAutoLoan({ ...baseInput, warranty: 3000 });
+    // $3,000 warranty × 13% HST = $390 more tax
+    expect(withWarranty.hst).toBeCloseTo(noWarranty.hst + 390, 1);
+    expect(withWarranty.warranty).toBe(3000);
+  });
+
+  it('safety certification is added to taxable amount and taxed', () => {
+    const noSafety = calculateAutoLoan(baseInput);
+    const withSafety = calculateAutoLoan({ ...baseInput, safetyCertification: 150 });
+    // $150 safety cert × 13% HST = $19.50 more tax
+    expect(withSafety.hst).toBeCloseTo(noSafety.hst + 19.50, 1);
+    expect(withSafety.safetyCertification).toBe(150);
+  });
+
+  it('other fees are added to taxable amount and taxed', () => {
+    const noOther = calculateAutoLoan(baseInput);
+    const withOther = calculateAutoLoan({ ...baseInput, otherFees: 500 });
+    // $500 other fees × 13% HST = $65 more tax
+    expect(withOther.hst).toBeCloseTo(noOther.hst + 65, 1);
+    expect(withOther.otherFees).toBe(500);
+  });
+
+  it('all additional fees combined increase loan principal', () => {
+    const withAll = calculateAutoLoan({
+      ...baseInput,
+      provinceCode: 'ON',
+      dealerAdminFee: 2000,
+      warranty: 3000,
+      safetyCertification: 150,
+      otherFees: 500,
+    });
+    // withAll builds on baseInput which defaults to ON, so it gets the full ON treatment
+    const baseOn = calculateAutoLoan(baseInput); // ON with no extra fees beyond $2000 admin
+    const extraFeeTotal = 3000 + 150 + 500; // warranty + safety + other (admin already in baseOn)
+    const extraTax = extraFeeTotal * 0.13;
+    expect(withAll.loanPrincipal).toBeCloseTo(baseOn.loanPrincipal + extraFeeTotal + extraTax, 1);
+  });
+
+  it('additional fees work correctly in Alberta (5% GST only)', () => {
+    const r = calculateAutoLoan({
+      ...baseInput,
+      provinceCode: 'AB',
+      dealerAdminFee: 0,
+      warranty: 2000,
+      safetyCertification: 100,
+      otherFees: 0,
+    });
+    // GST = 5% of fee total = $105
+    expect(r.warranty).toBe(2000);
+    expect(r.safetyCertification).toBe(100);
+    expect(r.hst).toBeGreaterThan(calculateAutoLoan({ ...baseInput, provinceCode: 'AB' }).hst);
+  });
+
+  it('additional fees reduce max vehicle price in reverse mode', () => {
+    const noFees = reverseCalculateAutoLoan({
+      targetBiWeeklyPayment: 500,
+      targetMonthlyPayment: 0,
+      vehicleYear: 2024,
+      tradeInValue: 0,
+      lienAmount: 0,
+      downPayment: 0,
+      termMonths: 84,
+      licensingFee: 59,
+      provinceCode: 'ON',
+    });
+    const withFees = reverseCalculateAutoLoan({
+      targetBiWeeklyPayment: 500,
+      targetMonthlyPayment: 0,
+      vehicleYear: 2024,
+      tradeInValue: 0,
+      lienAmount: 0,
+      downPayment: 0,
+      termMonths: 84,
+      licensingFee: 59,
+      provinceCode: 'ON',
+      warranty: 3000,
+    });
+    // $3,000 warranty should reduce max vehicle price since budget is fixed
+    expect(withFees.maxVehiclePrice).toBeLessThan(noFees.maxVehiclePrice);
+  });
+});
