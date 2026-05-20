@@ -89,6 +89,20 @@ const LoanInputs: React.FC<Props> = ({
 
         {reverseMode ? (
           <>
+            {/* APR (read-only) — sits above target payment row */}
+            <div className="input-group">
+              <label>APR (%)</label>
+              <input
+                type="number"
+                value={results.minApr}
+                readOnly
+                style={{ opacity: 0.6, cursor: 'not-allowed' }}
+              />
+              <div style={{ color: 'var(--text-secondary)', fontSize: '0.7rem', marginTop: '0.2rem' }}>
+                Min for {inputs.vehicleYear}: {results.minApr}%
+              </div>
+            </div>
+
             {/* Target Bi-Weekly Payment */}
             <div className="input-group">
               <label>Target Bi-Weekly ($)</label>
@@ -109,20 +123,6 @@ const LoanInputs: React.FC<Props> = ({
                 value={targetMonthlyPayment ? fmt(targetMonthlyPayment) : ''}
                 onChange={(e) => onTargetMonthlyChange(parseFormatted(e.target.value))}
               />
-            </div>
-
-            {/* APR (read-only) */}
-            <div className="input-group">
-              <label>APR (%)</label>
-              <input
-                type="number"
-                value={results.minApr}
-                readOnly
-                style={{ opacity: 0.6, cursor: 'not-allowed' }}
-              />
-              <div style={{ color: 'var(--text-secondary)', fontSize: '0.7rem', marginTop: '0.2rem' }}>
-                Min for {inputs.vehicleYear}: {results.minApr}%
-              </div>
             </div>
 
             {/* Term (editable slider) */}
