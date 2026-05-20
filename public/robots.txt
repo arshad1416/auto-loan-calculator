@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://auto-loan-calculator.pages.dev/sitemap.xml
