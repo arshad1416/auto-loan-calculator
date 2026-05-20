@@ -7,6 +7,7 @@ import {
 import LoanInputs from './components/LoanInputs';
 import LoanResults from './components/LoanResults';
 import AmortizationSchedule from './components/AmortizationSchedule';
+import Disclaimer from './components/Disclaimer';
 
 const App: React.FC = () => {
   const [state, dispatch] = useReducer(calculatorReducer, undefined, createInitialState);
@@ -89,6 +90,8 @@ const App: React.FC = () => {
         visible={state.showSchedule}
         onToggle={() => dispatch({ type: 'TOGGLE_SCHEDULE' })}
       />
+
+      <Disclaimer />
 
       <footer style={{ marginTop: '4rem', textAlign: 'center', color: 'var(--text-secondary)', fontSize: '0.875rem' }}>
         &copy; {new Date().getFullYear()} ShiftLogic HQ Automation Hub. All calculations are estimates.
