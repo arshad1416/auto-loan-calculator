@@ -39,6 +39,8 @@ const PARAM_KEYS: Record<keyof CalculationInput, string> = {
   apr: 'apr',
   termMonths: 'term',
   licensingFee: 'licensing',
+  provinceCode: 'prov',
+  vehicleCondition: 'cond',
 };
 
 interface URLOverrides extends Partial<CalculationInput> {
