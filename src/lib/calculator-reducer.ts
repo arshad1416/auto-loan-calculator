@@ -41,6 +41,7 @@ const PARAM_KEYS: Record<keyof CalculationInput, string> = {
   licensingFee: 'licensing',
   provinceCode: 'prov',
   vehicleCondition: 'cond',
+  lenderAdminFee: 'lender',
   dealerAdminFee: 'admin',
   warranty: 'warranty',
   safetyCertification: 'safety',
@@ -97,6 +98,7 @@ const DEFAULTS: CalculationInput = {
   apr: 6.99,
   termMonths: 84,
   licensingFee: 59,
+  lenderAdminFee: 0,
   dealerAdminFee: 0,
   warranty: 0,
   safetyCertification: 0,
@@ -116,6 +118,7 @@ function runReverseCalc(state: CalculatorState, overrides: Partial<CalculatorSta
     licensingFee: s.inputs.licensingFee,
     provinceCode: s.inputs.provinceCode,
     vehicleCondition: s.inputs.vehicleCondition,
+    lenderAdminFee: s.inputs.lenderAdminFee,
     dealerAdminFee: s.inputs.dealerAdminFee,
     warranty: s.inputs.warranty,
     safetyCertification: s.inputs.safetyCertification,
@@ -135,10 +138,10 @@ export function createInitialState(): CalculatorState {
     if (province) inputs.licensingFee = province.defaultLicensingFee;
   }
 
-  // Sync dealer admin fee to province default if URL didn't explicitly set it
-  if (urlOverrides.dealerAdminFee === undefined) {
+  // Sync lender admin fee to province default if URL didn't explicitly set it
+  if (urlOverrides.lenderAdminFee === undefined) {
     const provCode = inputs.provinceCode || 'ON';
-    inputs.dealerAdminFee = provCode === 'ON' ? 2000 : 0;
+    inputs.lenderAdminFee = provCode === 'ON' ? 2000 : 0;
   }
 
   const results = calculateAutoLoan(inputs);
@@ -182,7 +185,7 @@ export function calculatorReducer(state: CalculatorState, action: CalculatorActi
         if (action.field === 'provinceCode' && typeof action.value === 'string') {
           const province = PROVINCES.find(p => p.code === action.value);
           if (province) {
-            newInputs = { ...newInputs, licensingFee: province.defaultLicensingFee, dealerAdminFee: action.value === 'ON' ? 2000 : 0 };
+            newInputs = { ...newInputs, licensingFee: province.defaultLicensingFee, lenderAdminFee: action.value === 'ON' ? 2000 : 0 };
           }
         }
         const newState = { ...state, inputs: newInputs };
@@ -198,7 +201,7 @@ export function calculatorReducer(state: CalculatorState, action: CalculatorActi
       if (action.field === 'provinceCode' && typeof action.value === 'string') {
         const province = PROVINCES.find(p => p.code === action.value);
         if (province) {
-          newInputs = { ...newInputs, licensingFee: province.defaultLicensingFee, dealerAdminFee: action.value === 'ON' ? 2000 : 0 };
+          newInputs = { ...newInputs, licensingFee: province.defaultLicensingFee, lenderAdminFee: action.value === 'ON' ? 2000 : 0 };
         }
       }
       return {

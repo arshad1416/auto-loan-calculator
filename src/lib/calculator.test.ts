@@ -329,22 +329,30 @@ describe('Federal Luxury Tax', () => {
 });
 
 describe('Additional fees & products', () => {
-  it('dealer admin fee defaults to $2,000 in Ontario', () => {
+  it('lender admin fee defaults to $2,000 in Ontario', () => {
     const r = calculateAutoLoan({ ...baseInput, provinceCode: 'ON' });
-    expect(r.dealerAdminFee).toBe(2000);
+    expect(r.lenderAdminFee).toBe(2000);
   });
 
-  it('dealer admin fee defaults to $0 outside Ontario', () => {
+  it('lender admin fee defaults to $0 outside Ontario', () => {
     const r = calculateAutoLoan({ ...baseInput, provinceCode: 'BC' });
-    expect(r.dealerAdminFee).toBe(0);
+    expect(r.lenderAdminFee).toBe(0);
   });
 
-  it('dealer admin fee can be overridden', () => {
-    const r = calculateAutoLoan({ ...baseInput, provinceCode: 'ON', dealerAdminFee: 500 });
-    expect(r.dealerAdminFee).toBe(500);
+  it('lender admin fee can be overridden', () => {
+    const r = calculateAutoLoan({ ...baseInput, provinceCode: 'ON', lenderAdminFee: 500 });
+    expect(r.lenderAdminFee).toBe(500);
     // Taxable amount should be lower with reduced admin fee
     const rDefault = calculateAutoLoan({ ...baseInput, provinceCode: 'ON' });
     expect(r.hst).toBeLessThan(rDefault.hst);
+  });
+
+  it('dealer admin fee is user-editable and taxable', () => {
+    const noDealer = calculateAutoLoan(baseInput);
+    const withDealer = calculateAutoLoan({ ...baseInput, dealerAdminFee: 500 });
+    // $500 dealer admin × 13% HST = $65 more tax
+    expect(withDealer.hst).toBeCloseTo(noDealer.hst + 65, 1);
+    expect(withDealer.dealerAdminFee).toBe(500);
   });
 
   it('warranty is added to taxable amount and taxed', () => {
@@ -375,14 +383,14 @@ describe('Additional fees & products', () => {
     const withAll = calculateAutoLoan({
       ...baseInput,
       provinceCode: 'ON',
-      dealerAdminFee: 2000,
+      dealerAdminFee: 800,
       warranty: 3000,
       safetyCertification: 150,
       otherFees: 500,
     });
-    // withAll builds on baseInput which defaults to ON, so it gets the full ON treatment
-    const baseOn = calculateAutoLoan(baseInput); // ON with no extra fees beyond $2000 admin
-    const extraFeeTotal = 3000 + 150 + 500; // warranty + safety + other (admin already in baseOn)
+    // baseOn already has $2,000 lender admin; withAll adds dealer + warranty + safety + other
+    const baseOn = calculateAutoLoan(baseInput);
+    const extraFeeTotal = 800 + 3000 + 150 + 500; // dealer + warranty + safety + other
     const extraTax = extraFeeTotal * 0.13;
     expect(withAll.loanPrincipal).toBeCloseTo(baseOn.loanPrincipal + extraFeeTotal + extraTax, 1);
   });
@@ -391,7 +399,6 @@ describe('Additional fees & products', () => {
     const r = calculateAutoLoan({
       ...baseInput,
       provinceCode: 'AB',
-      dealerAdminFee: 0,
       warranty: 2000,
       safetyCertification: 100,
       otherFees: 0,

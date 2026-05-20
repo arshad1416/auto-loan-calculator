@@ -139,6 +139,7 @@ const LoanResults: React.FC<Props> = ({ inputs, results, reverseMode, targetBiWe
       <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', textAlign: 'center', opacity: 0.7 }}>
         Includes ${results.licensingFee.toLocaleString()} Licensing
         {selectedProv.regulatingFee > 0 && `, $${selectedProv.regulatingFee} ${selectedProv.regulatingFeeName}`}
+        {results.lenderAdminFee > 0 && `, $${results.lenderAdminFee.toLocaleString()} Lender Admin`}
         {results.dealerAdminFee > 0 && `, $${results.dealerAdminFee.toLocaleString()} Dealer Admin`}
         {results.warranty > 0 && `, $${results.warranty.toLocaleString()} Warranty`}
         {results.safetyCertification > 0 && `, $${results.safetyCertification.toLocaleString()} Safety Cert`}

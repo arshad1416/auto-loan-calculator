@@ -276,6 +276,15 @@ const LoanInputs: React.FC<Props> = ({
         </label>
         <div className="input-grid">
           <div className="input-group">
+            <label>Lender Admin Fee ($)</label>
+            <input
+              type="text"
+              inputMode="numeric"
+              value={inputs.lenderAdminFee ? fmt(inputs.lenderAdminFee) : ''}
+              onChange={(e) => onChange('lenderAdminFee', parseFormatted(e.target.value))}
+            />
+          </div>
+          <div className="input-group">
             <label>Dealer Admin Fee ($)</label>
             <input
               type="text"

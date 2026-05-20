@@ -1,6 +1,6 @@
 /**
  * Auto Loan Calculator Logic
- * Factors in Ontario-specific taxes (HST 13%), OMVIC fees, and Lender Admin fees.
+ * Factors in Ontario-specific taxes (HST 13%), OMVIC fees, lender admin fees, and dealer admin fees.
  */
 
 export interface AmortizationPeriod {
@@ -25,6 +25,7 @@ export interface CalculationInput {
   licensingFee: number;
   provinceCode?: string;
   vehicleCondition?: VehicleCondition;
+  lenderAdminFee?: number;
   dealerAdminFee?: number;
   warranty?: number;
   safetyCertification?: number;
@@ -53,6 +54,7 @@ export interface CalculationResult {
   provinceCode?: string;
   regulatingFee?: number;
   regulatingFeeName?: string;
+  lenderAdminFee: number;
   dealerAdminFee: number;
   warranty: number;
   safetyCertification: number;
@@ -180,7 +182,7 @@ export function computeLumpSumAmortization(
 }
 
 export const calculateAutoLoan = (input: CalculationInput): CalculationResult => {
-  const { vehicleYear, vehiclePrice, tradeInValue, lienAmount, downPayment, apr, termMonths, licensingFee, provinceCode, vehicleCondition, dealerAdminFee, warranty, safetyCertification, otherFees } = input;
+  const { vehicleYear, vehiclePrice, tradeInValue, lienAmount, downPayment, apr, termMonths, licensingFee, provinceCode, vehicleCondition, lenderAdminFee, dealerAdminFee, warranty, safetyCertification, otherFees } = input;
 
   const rules = getYearRules(vehicleYear);
   const maxTermAllowed = rules.maxTermAllowed;
@@ -191,19 +193,20 @@ export const calculateAutoLoan = (input: CalculationInput): CalculationResult =>
   const province = PROVINCES.find(p => p.code === provCode) || PROVINCES[0];
   const regulatingFee = province.regulatingFee;
 
-  // Use input dealerAdminFee (defaults to 2000 for ON, 0 elsewhere)
-  const dealerAdmin = dealerAdminFee ?? (provCode === 'ON' ? 2000 : 0);
+  // Lender (bank) admin fee defaults to $2,000 in ON, $0 elsewhere
+  const lenderAdmin = lenderAdminFee ?? (provCode === 'ON' ? 2000 : 0);
+  const dealerAdmin = dealerAdminFee ?? 0;
   const warrantyFee = warranty ?? 0;
   const safetyFee = safetyCertification ?? 0;
   const otherFeeAmount = otherFees ?? 0;
 
   // Calculate Federal Luxury Tax: Lesser of 10% of total price or 20% of amount over $100,000
-  // CRA: Applies to NEW vehicles only, based on the retail sale price (not dealer admin or regulatory fees)
+  // CRA: Applies to NEW vehicles only, based on the retail sale price (not admin or regulatory fees)
   const isNew = vehicleCondition === 'new';
   const luxuryTax = (isNew && vehiclePrice > 100000) ? Math.min(vehiclePrice * 0.10, (vehiclePrice - 100000) * 0.20) : 0;
 
   // 1. Calculate Taxable Amount (trade-in reduces base; luxury tax is taxable; all additional fees/products are taxable)
-  const taxableAmount = Math.max(0, vehiclePrice - tradeInValue + dealerAdmin + regulatingFee + luxuryTax + warrantyFee + safetyFee + otherFeeAmount);
+  const taxableAmount = Math.max(0, vehiclePrice - tradeInValue + lenderAdmin + dealerAdmin + regulatingFee + luxuryTax + warrantyFee + safetyFee + otherFeeAmount);
 
   // 2. Net equity from trade: negative = positive equity (reduces loan), positive = negative equity
   const netTradeEffect = lienAmount - tradeInValue;
@@ -272,6 +275,7 @@ export const calculateAutoLoan = (input: CalculationInput): CalculationResult =>
     provinceCode: provCode,
     regulatingFee,
     regulatingFeeName: province.regulatingFeeName,
+    lenderAdminFee: lenderAdmin,
     dealerAdminFee: dealerAdmin,
     warranty: warrantyFee,
     safetyCertification: safetyFee,
@@ -290,6 +294,7 @@ export interface ReverseInput {
   licensingFee: number;
   provinceCode?: string;
   vehicleCondition?: VehicleCondition;
+  lenderAdminFee?: number;
   dealerAdminFee?: number;
   warranty?: number;
   safetyCertification?: number;
@@ -297,7 +302,7 @@ export interface ReverseInput {
 }
 
 export const reverseCalculateAutoLoan = (input: ReverseInput): CalculationResult => {
-  const { targetBiWeeklyPayment, targetMonthlyPayment, vehicleYear, tradeInValue, lienAmount, downPayment, termMonths, licensingFee, provinceCode, vehicleCondition, dealerAdminFee, warranty, safetyCertification, otherFees } = input;
+  const { targetBiWeeklyPayment, targetMonthlyPayment, vehicleYear, tradeInValue, lienAmount, downPayment, termMonths, licensingFee, provinceCode, vehicleCondition, lenderAdminFee, dealerAdminFee, warranty, safetyCertification, otherFees } = input;
   const monthlyTarget = targetMonthlyPayment > 0 ? targetMonthlyPayment : (targetBiWeeklyPayment * 26) / 12;
 
   const provCode = provinceCode || 'ON';
@@ -329,6 +334,7 @@ export const reverseCalculateAutoLoan = (input: ReverseInput): CalculationResult
       licensingFee,
       provinceCode: provCode,
       vehicleCondition,
+      lenderAdminFee,
       dealerAdminFee,
       warranty,
       safetyCertification,
