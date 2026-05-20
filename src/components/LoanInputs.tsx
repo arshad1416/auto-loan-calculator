@@ -12,6 +12,7 @@ interface Props {
   onToggleMode: () => void;
   onTargetBiWeeklyChange: (value: number) => void;
   onTargetMonthlyChange: (value: number) => void;
+  onReset: () => void;
 }
 
 const CURRENT_YEAR = new Date().getFullYear();
@@ -26,6 +27,7 @@ const LoanInputs: React.FC<Props> = ({
   targetBiWeeklyPayment, targetMonthlyPayment,
   onChange, onYearChange, onToggleMode,
   onTargetBiWeeklyChange, onTargetMonthlyChange,
+  onReset,
 }) => {
   const isTermTooLong = inputs.termMonths > results.maxTermAllowed;
   const isDownPaymentTooLow = inputs.downPayment < results.minDownPaymentRequired;
@@ -321,6 +323,14 @@ const LoanInputs: React.FC<Props> = ({
             />
           </div>
         </div>
+        <button
+          type="button"
+          className="reset-btn"
+          onClick={onReset}
+          title="Reset all fields to defaults"
+        >
+          Reset All Fields
+        </button>
       </div>
     </div>
   );

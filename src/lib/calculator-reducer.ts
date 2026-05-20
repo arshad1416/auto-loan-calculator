@@ -26,7 +26,8 @@ export type CalculatorAction =
   | { type: 'DISMISS_ADJUSTMENTS' }
   | { type: 'TOGGLE_MODE' }
   | { type: 'SET_TARGET_BIWEEKLY'; value: number }
-  | { type: 'SET_TARGET_MONTHLY'; value: number };
+  | { type: 'SET_TARGET_MONTHLY'; value: number }
+  | { type: 'RESET' };
 
 // ── URL sync ────────────────────────────────────────────────────────
 
@@ -343,6 +344,9 @@ export function calculatorReducer(state: CalculatorState, action: CalculatorActi
         adjustments: null,
       };
     }
+
+    case 'RESET':
+      return createInitialState();
 
     default:
       return state;

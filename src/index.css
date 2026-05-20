@@ -457,3 +457,24 @@ input[type="text"]:focus {
 .disclaimer-text strong {
   color: var(--text-primary);
 }
+
+/* Reset Button */
+.reset-btn {
+  display: block;
+  width: 100%;
+  margin-top: 1rem;
+  background: transparent;
+  border: 1px solid var(--panel-border);
+  color: var(--text-secondary);
+  padding: 0.6rem 1rem;
+  border-radius: 8px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.reset-btn:hover {
+  background: var(--error-color);
+  border-color: var(--error-color);
+  color: #fff;
+}

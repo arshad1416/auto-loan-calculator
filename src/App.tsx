@@ -76,6 +76,7 @@ const App: React.FC = () => {
           onToggleMode={() => dispatch({ type: 'TOGGLE_MODE' })}
           onTargetBiWeeklyChange={(value) => dispatch({ type: 'SET_TARGET_BIWEEKLY', value })}
           onTargetMonthlyChange={(value) => dispatch({ type: 'SET_TARGET_MONTHLY', value })}
+          onReset={() => dispatch({ type: 'RESET' })}
         />
         <LoanResults
           inputs={state.inputs}
