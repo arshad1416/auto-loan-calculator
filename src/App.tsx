@@ -52,6 +52,7 @@ const App: React.FC = () => {
           SHIFT<span style={{ color: 'var(--accent-color)' }}>LOGIC</span> HQ
         </h1>
         <p className="subtitle">Un-Official Dealer Payment Calculator</p>
+        <Disclaimer />
       </header>
 
       {adjustmentMessage && (
@@ -94,8 +95,6 @@ const App: React.FC = () => {
         termMonths={state.inputs.termMonths}
         biWeeklyPayment={state.results.biWeeklyPayment}
       />
-
-      <Disclaimer />
 
       <footer style={{ marginTop: '4rem', textAlign: 'center', color: 'var(--text-secondary)', fontSize: '0.875rem' }}>
         &copy; {new Date().getFullYear()} ShiftLogic HQ Automation Hub. All calculations are estimates.
