@@ -8,6 +8,7 @@ import LoanInputs from './components/LoanInputs';
 import LoanResults from './components/LoanResults';
 import AmortizationSchedule from './components/AmortizationSchedule';
 import Disclaimer from './components/Disclaimer';
+import VehicleListings from './components/VehicleListings';
 
 const App: React.FC = () => {
   const [state, dispatch] = useReducer(calculatorReducer, undefined, createInitialState);
@@ -86,6 +87,15 @@ const App: React.FC = () => {
           targetMonthlyPayment={state.targetMonthlyPayment}
         />
       </div>
+
+      {state.reverseMode && state.results.maxVehiclePrice > 0 && (
+        <VehicleListings
+          maxPrice={state.results.maxVehiclePrice}
+          provinceCode={state.inputs.provinceCode || 'ON'}
+          vehicleCondition={state.inputs.vehicleCondition || 'used'}
+          vehicleYear={state.inputs.vehicleYear}
+        />
+      )}
 
       <AmortizationSchedule
         schedule={state.results.schedule}
