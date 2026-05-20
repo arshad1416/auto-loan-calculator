@@ -137,7 +137,8 @@ const LoanResults: React.FC<Props> = ({ inputs, results, reverseMode, targetBiWe
       )}
 
       <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', textAlign: 'center', opacity: 0.7 }}>
-        Includes ${(results.licensingFee || 56).toLocaleString()} Licensing, ${selectedProv.regulatingFee} {selectedProv.regulatingFeeName}
+        Includes ${(results.licensingFee || 56).toLocaleString()} Licensing
+        {selectedProv.regulatingFee > 0 && `, $${selectedProv.regulatingFee} ${selectedProv.regulatingFeeName}`}
         {selectedProv.code === 'ON' && ', $2,000 Dealer Admin fee'}
         .
       </div>
