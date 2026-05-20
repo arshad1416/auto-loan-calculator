@@ -9,6 +9,7 @@ export interface AmortizationPeriod {
   principal: number;
   interest: number;
   balance: number;
+  extraPayment?: number;
 }
 
 export type VehicleCondition = 'new' | 'used';
@@ -117,7 +118,7 @@ export function getYearRules(vehicleYear: number): YearRules {
   }
 }
 
-function computeAmortization(
+export function computeAmortization(
   loanPrincipal: number, apr: number, termMonths: number, biWeeklyPayment: number
 ): AmortizationPeriod[] {
   const schedule: AmortizationPeriod[] = [];
@@ -139,6 +140,42 @@ function computeAmortization(
     if (currentBalance <= 0) break;
   }
   return schedule;
+}
+
+export function computeAcceleratedAmortization(
+  loanPrincipal: number, apr: number, termMonths: number, biWeeklyPayment: number, extraPayment: number
+): { schedule: AmortizationPeriod[]; periodsSaved: number; interestSaved: number } {
+  const schedule: AmortizationPeriod[] = [];
+  const biWeeklyRate = apr / 100 / 26;
+  const maxPeriods = (termMonths / 12) * 26;
+  let currentBalance = loanPrincipal;
+  let totalInterestPaid = 0;
+
+  for (let i = 1; i <= maxPeriods; i++) {
+    const interestPayment = currentBalance * biWeeklyRate;
+    const totalPayment = biWeeklyPayment + extraPayment;
+    const principalPayment = Math.min(currentBalance, totalPayment - interestPayment);
+    const actualPayment = principalPayment + interestPayment;
+    currentBalance = Math.max(0, currentBalance - principalPayment);
+    totalInterestPaid += interestPayment;
+    schedule.push({
+      period: i,
+      payment: actualPayment,
+      principal: principalPayment,
+      interest: interestPayment,
+      balance: currentBalance,
+      extraPayment: extraPayment,
+    });
+    if (currentBalance <= 0) break;
+  }
+
+  // Calculate original schedule for comparison
+  const originalSchedule = computeAmortization(loanPrincipal, apr, termMonths, biWeeklyPayment);
+  const originalInterest = originalSchedule.reduce((sum, p) => sum + p.interest, 0);
+  const periodsSaved = originalSchedule.length - schedule.length;
+  const interestSaved = originalInterest - totalInterestPaid;
+
+  return { schedule, periodsSaved, interestSaved };
 }
 
 export const calculateAutoLoan = (input: CalculationInput): CalculationResult => {

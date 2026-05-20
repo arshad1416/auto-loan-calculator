@@ -89,6 +89,10 @@ const App: React.FC = () => {
         schedule={state.results.schedule}
         visible={state.showSchedule}
         onToggle={() => dispatch({ type: 'TOGGLE_SCHEDULE' })}
+        loanPrincipal={state.results.loanPrincipal}
+        apr={state.inputs.apr}
+        termMonths={state.inputs.termMonths}
+        biWeeklyPayment={state.results.biWeeklyPayment}
       />
 
       <Disclaimer />
