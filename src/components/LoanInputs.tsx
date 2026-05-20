@@ -48,7 +48,7 @@ const LoanInputs: React.FC<Props> = ({
         </button>
       </div>
 
-      <div className="input-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
+      <div className="input-grid">
         {/* Province / Territory */}
         <div className="input-group">
           <label>Province / Territory</label>

@@ -182,9 +182,122 @@ input[type="range"]::-webkit-slider-thumb {
   gap: 2rem;
 }
 
+.input-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+}
+
 @media (max-width: 1024px) {
   .app-grid {
     grid-template-columns: 1fr;
+  }
+}
+
+/* ── Tablet (≤768px) ────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  body {
+    padding: 1rem;
+  }
+
+  h1 {
+    font-size: 1.75rem;
+  }
+
+  .subtitle {
+    font-size: 0.75rem;
+  }
+
+  .glass-panel {
+    padding: 1.5rem;
+    border-radius: 1.5rem;
+  }
+
+  .hero-payment {
+    padding: 2rem 1.25rem;
+  }
+
+  .payment-amount {
+    font-size: 3rem;
+  }
+
+  .payment-label {
+    font-size: 1rem;
+  }
+
+  .app-grid {
+    gap: 1.5rem;
+  }
+
+  .input-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .mode-toggle button {
+    font-size: 0.75rem;
+    padding: 0.5rem 0.75rem;
+  }
+
+  table thead th {
+    font-size: 0.75rem;
+    padding: 0.75rem 0.5rem;
+  }
+
+  table tbody td {
+    font-size: 0.875rem;
+    padding: 0.75rem 0.5rem;
+  }
+}
+
+/* ── Phone (≤480px) ─────────────────────────────────────────────────── */
+@media (max-width: 480px) {
+  body {
+    padding: 0.75rem;
+    align-items: flex-start;
+    padding-top: 1.5rem;
+  }
+
+  h1 {
+    font-size: 1.5rem;
+  }
+
+  .subtitle {
+    font-size: 0.7rem;
+    letter-spacing: 0.05em;
+    margin-bottom: 1.5rem;
+  }
+
+  .glass-panel {
+    padding: 1.25rem;
+    border-radius: 1rem;
+  }
+
+  .hero-payment {
+    padding: 1.5rem 1rem;
+    border-radius: 1rem;
+  }
+
+  .payment-amount {
+    font-size: 2.25rem;
+  }
+
+  .metrics-row {
+    grid-template-columns: 1fr;
+  }
+
+  .metrics-row .metric:first-child {
+    border-right: none;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  }
+
+  .adjustment-banner {
+    padding: 0.5rem 1rem;
+    font-size: 0.75rem;
+  }
+
+  footer {
+    font-size: 0.75rem !important;
+    margin-top: 2rem !important;
   }
 }
 
