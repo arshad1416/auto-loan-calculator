@@ -116,7 +116,7 @@ export function getYearRules(vehicleYear: number): YearRules {
   } else if (vehicleYear >= 2010) {
     return { maxTermAllowed: 66, minApr: 14.99, isBankFinancable: true, minDownPaymentPct: 0.10 };
   } else {
-    return { maxTermAllowed: 48, minApr: 19.99, isBankFinancable: false, minDownPaymentPct: 0.25 };
+    return { maxTermAllowed: 48, minApr: 19.99, isBankFinancable: false, minDownPaymentPct: 0.50 };
   }
 }
 

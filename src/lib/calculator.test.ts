@@ -51,7 +51,7 @@ describe('calculateAutoLoan', () => {
     expect(r.maxTermAllowed).toBe(48);
     expect(r.minApr).toBe(19.99);
     expect(r.isBankFinancable).toBe(false);
-    expect(r.minDownPaymentRequired).toBe(baseInput.vehiclePrice * 0.25);
+    expect(r.minDownPaymentRequired).toBe(baseInput.vehiclePrice * 0.50);
   });
 
   // ── HST / fee calculations ────────────────────────────────────────
@@ -198,7 +198,7 @@ describe('reverseCalculateAutoLoan', () => {
     expect(r.loanPrincipal).toBeGreaterThan(0);
     expect(r.schedule.length).toBeGreaterThan(0);
   });
-  it('pre-2010 vehicle gets 19.99% APR, 48mo, 25% down floor', () => {
+  it('pre-2010 vehicle gets 19.99% APR, 48mo, 50% down floor', () => {
     const r = reverseCalculateAutoLoan({ targetBiWeeklyPayment: 300, targetMonthlyPayment: 0, vehicleYear: 2008, tradeInValue: 0, lienAmount: 0, downPayment: 0, termMonths: 48, licensingFee: 56 });
     expect(r.maxTermAllowed).toBe(48);
     expect(r.minApr).toBe(19.99);

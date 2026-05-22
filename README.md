@@ -49,7 +49,7 @@ Vehicle year determines the maximum loan term, minimum APR, and down payment flo
 | 2021–2022 | 72 months (6 yr) | 7.99% | None | Yes |
 | 2016–2020 | 60 months (5 yr) | 8.99% | None | Yes |
 | 2010–2015 | 66 months (5.5 yr) | 14.99% | 10% of vehicle price | Yes |
-| Pre-2010 | 48 months (4 yr) | 19.99% | 25% of vehicle price | No |
+| Pre-2010 | 48 months (4 yr) | 19.99% | 50% of vehicle price | No |
 
 ## Taxes & Fees (Province/Territory-Specific)
 
