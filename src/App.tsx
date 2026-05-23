@@ -1,8 +1,7 @@
-import { useReducer, useEffect, useRef } from 'react';
+import { useReducer, useEffect } from 'react';
 import {
   createInitialState,
   calculatorReducer,
-  syncURL,
 } from './lib/calculator-reducer';
 import LoanInputs from './components/LoanInputs';
 import LoanResults from './components/LoanResults';
@@ -12,14 +11,6 @@ import VehicleListings from './components/VehicleListings';
 
 const App: React.FC = () => {
   const [state, dispatch] = useReducer(calculatorReducer, undefined, createInitialState);
-  const urlTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
-
-  // Sync URL after state changes (debounced)
-  useEffect(() => {
-    clearTimeout(urlTimer.current);
-    urlTimer.current = setTimeout(() => syncURL(state), 400);
-    return () => clearTimeout(urlTimer.current);
-  }, [state.inputs, state.reverseMode, state.targetBiWeeklyPayment, state.targetMonthlyPayment]);
 
   // Auto-dismiss adjustments after 6 seconds
   useEffect(() => {

@@ -29,64 +29,10 @@ export type CalculatorAction =
   | { type: 'SET_TARGET_MONTHLY'; value: number }
   | { type: 'RESET' };
 
-// ── URL sync ────────────────────────────────────────────────────────
+// ── No URL state — all state is in-memory only ──────────────────────
 
-const PARAM_KEYS: Record<keyof CalculationInput, string> = {
-  vehicleYear: 'year',
-  vehiclePrice: 'price',
-  tradeInValue: 'trade',
-  lienAmount: 'lien',
-  downPayment: 'down',
-  apr: 'apr',
-  termMonths: 'term',
-  licensingFee: 'licensing',
-  provinceCode: 'prov',
-  vehicleCondition: 'cond',
-  lenderAdminFee: 'lender',
-  dealerAdminFee: 'admin',
-  warranty: 'warranty',
-  safetyCertification: 'safety',
-  otherFees: 'otherFees',
-};
-
-interface URLOverrides extends Partial<CalculationInput> {
-  mode?: string;
-  targetBiWeekly?: number;
-  targetMonthly?: number;
-}
-
-function readParams(): URLOverrides {
-  const hash = window.location.hash.slice(1);
-  const params = new URLSearchParams(hash);
-  const out: URLOverrides = {};
-  for (const [key, param] of Object.entries(PARAM_KEYS)) {
-    const v = params.get(param);
-    if (v !== null && !isNaN(Number(v))) {
-      (out as Record<string, number>)[key] = Number(v);
-    }
-  }
-  const mode = params.get('mode');
-  if (mode) out.mode = mode;
-  const tbw = params.get('targetBiWeekly');
-  if (tbw !== null && !isNaN(Number(tbw))) out.targetBiWeekly = Number(tbw);
-  const tm = params.get('targetMonthly');
-  if (tm !== null && !isNaN(Number(tm))) out.targetMonthly = Number(tm);
-  return out;
-}
-
-export function syncURL(state: CalculatorState): void {
-  const params = new URLSearchParams();
-  for (const [key, param] of Object.entries(PARAM_KEYS)) {
-    params.set(param, String(state.inputs[key as keyof CalculationInput]));
-  }
-  if (state.reverseMode) {
-    params.set('mode', 'reverse');
-    params.set('targetBiWeekly', String(state.targetBiWeeklyPayment));
-    params.set('targetMonthly', String(state.targetMonthlyPayment));
-  }
-  const qs = params.toString();
-  const url = window.location.pathname + (qs ? '#' + qs : '');
-  window.history.replaceState(null, '', url);
+export function syncURL(_state: CalculatorState): void {
+  // No-op: state is stored in React memory only, never in the URL
 }
 
 // ── Defaults ────────────────────────────────────────────────────────
@@ -130,18 +76,15 @@ function runReverseCalc(state: CalculatorState, overrides: Partial<CalculatorSta
 
 // ── Initial state ───────────────────────────────────────────────────
 
-export function createInitialState(skipUrl = false): CalculatorState {
-  const urlOverrides = skipUrl ? {} : readParams();
-  const inputs = { ...DEFAULTS, ...urlOverrides };
+export function createInitialState(_skipUrl = false): CalculatorState {
+  const inputs = { ...DEFAULTS };
 
-  // Sync licensing fee to province default if URL didn't explicitly set it
-  if (urlOverrides.licensingFee === undefined && inputs.provinceCode) {
+  // Apply province defaults for licensing and lender fees
+  if (inputs.provinceCode) {
     const province = PROVINCES.find(p => p.code === inputs.provinceCode);
     if (province) inputs.licensingFee = province.defaultLicensingFee;
   }
-
-  // Sync lender admin fee to province default if URL didn't explicitly set it
-  if (urlOverrides.lenderAdminFee === undefined) {
+  {
     const provCode = inputs.provinceCode || 'ON';
     inputs.lenderAdminFee = provCode === 'ON' ? 2000 : 0;
   }
@@ -151,9 +94,9 @@ export function createInitialState(skipUrl = false): CalculatorState {
   inputs.termMonths = Math.min(inputs.termMonths, results.maxTermAllowed);
   inputs.downPayment = Math.max(inputs.downPayment, results.minDownPaymentRequired);
 
-  const reverseMode = urlOverrides.mode === 'reverse';
-  const targetBiWeeklyPayment = urlOverrides.targetBiWeekly ?? 500;
-  const targetMonthlyPayment = urlOverrides.targetMonthly ?? Math.round(targetBiWeeklyPayment * 26 / 12);
+  const reverseMode = false;
+  const targetBiWeeklyPayment = 500;
+  const targetMonthlyPayment = Math.round(500 * 26 / 12);
 
   const initialState: CalculatorState = {
     inputs,
@@ -347,7 +290,6 @@ export function calculatorReducer(state: CalculatorState, action: CalculatorActi
     }
 
     case 'RESET':
-      window.history.replaceState(null, '', window.location.pathname);
       return createInitialState(true);
 
     default:
