@@ -125,7 +125,7 @@ export function computeAmortization(
 ): AmortizationPeriod[] {
   const schedule: AmortizationPeriod[] = [];
   const biWeeklyRate = apr / 100 / 26;
-  const totalPeriods = (termMonths / 12) * 26;
+  const totalPeriods = Math.min((termMonths / 12) * 26, 1000);
   let currentBalance = loanPrincipal;
 
   for (let i = 1; i <= totalPeriods; i++) {
@@ -323,23 +323,28 @@ export const reverseCalculateAutoLoan = (input: ReverseInput): CalculationResult
     const excessNegativeEquity = Math.max(0, negativeEquity - maxFinanceable);
     const minDownRequiredOverall = Math.max(Math.round(mid * rules.minDownPaymentPct), excessNegativeEquity);
 
-    const res = calculateAutoLoan({
-      vehicleYear,
-      vehiclePrice: mid,
-      tradeInValue,
-      lienAmount,
-      downPayment: Math.max(downPayment, minDownRequiredOverall),
-      apr,
-      termMonths: term,
-      licensingFee,
-      provinceCode: provCode,
-      vehicleCondition,
-      lenderAdminFee,
-      dealerAdminFee,
-      warranty,
-      safetyCertification,
-      otherFees,
-    });
+    let res: CalculationResult;
+    try {
+      res = calculateAutoLoan({
+        vehicleYear,
+        vehiclePrice: mid,
+        tradeInValue,
+        lienAmount,
+        downPayment: Math.max(downPayment, minDownRequiredOverall),
+        apr,
+        termMonths: term,
+        licensingFee,
+        provinceCode: provCode,
+        vehicleCondition,
+        lenderAdminFee,
+        dealerAdminFee,
+        warranty,
+        safetyCertification,
+        otherFees,
+      });
+    } catch {
+      break;
+    }
 
     if (res.monthlyPayment <= monthlyTarget) {
       bestPrice = mid;
@@ -356,22 +361,38 @@ export const reverseCalculateAutoLoan = (input: ReverseInput): CalculationResult
   const excessNegativeEquity = Math.max(0, negativeEquity - maxFinanceable);
   const minDownRequiredOverall = Math.max(Math.round(finalPrice * rules.minDownPaymentPct), excessNegativeEquity);
 
-  const forwardResult = calculateAutoLoan({
-    vehicleYear,
-    vehiclePrice: finalPrice,
-    tradeInValue,
-    lienAmount,
-    downPayment: Math.max(downPayment, minDownRequiredOverall),
-    apr,
-    termMonths: term,
-    licensingFee,
-    provinceCode: provCode,
-    vehicleCondition,
-    dealerAdminFee,
-    warranty,
-    safetyCertification,
-    otherFees,
-  });
+  let forwardResult: CalculationResult;
+  try {
+    forwardResult = calculateAutoLoan({
+      vehicleYear,
+      vehiclePrice: finalPrice,
+      tradeInValue,
+      lienAmount,
+      downPayment: Math.max(downPayment, minDownRequiredOverall),
+      apr,
+      termMonths: term,
+      licensingFee,
+      provinceCode: provCode,
+      vehicleCondition,
+      dealerAdminFee,
+      warranty,
+      safetyCertification,
+      otherFees,
+    });
+  } catch {
+    forwardResult = calculateAutoLoan({
+      vehicleYear,
+      vehiclePrice: 0,
+      tradeInValue: 0,
+      lienAmount: 0,
+      downPayment: 0,
+      apr,
+      termMonths: term,
+      licensingFee,
+      provinceCode: provCode,
+      vehicleCondition,
+    });
+  }
 
   return {
     ...forwardResult,

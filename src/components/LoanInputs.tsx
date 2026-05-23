@@ -20,7 +20,7 @@ const YEAR_OPTIONS = Array.from({ length: CURRENT_YEAR - 1990 + 2 }, (_, i) => 1
 
 const fmt = (n: number) => n.toLocaleString();
 
-const parseFormatted = (raw: string): number => parseFloat(raw.replace(/,/g, '')) || 0;
+const parseFormatted = (raw: string): number => Math.min(parseFloat(raw.replace(/,/g, '')) || 0, 99_999_999);
 
 const LoanInputs: React.FC<Props> = ({
   inputs, results, reverseMode,

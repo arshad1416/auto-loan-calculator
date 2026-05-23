@@ -489,3 +489,7 @@ input[type="text"]:focus {
   margin: 0 auto;
 }
 @keyframes spin { to { transform: rotate(360deg); } }
+
+.listing-card:hover {
+  border-color: var(--accent-color);
+}

@@ -56,7 +56,8 @@ interface URLOverrides extends Partial<CalculationInput> {
 }
 
 function readParams(): URLOverrides {
-  const params = new URLSearchParams(window.location.search);
+  const hash = window.location.hash.slice(1);
+  const params = new URLSearchParams(hash);
   const out: URLOverrides = {};
   for (const [key, param] of Object.entries(PARAM_KEYS)) {
     const v = params.get(param);
@@ -84,7 +85,7 @@ export function syncURL(state: CalculatorState): void {
     params.set('targetMonthly', String(state.targetMonthlyPayment));
   }
   const qs = params.toString();
-  const url = window.location.pathname + (qs ? '?' + qs : '');
+  const url = window.location.pathname + (qs ? '#' + qs : '');
   window.history.replaceState(null, '', url);
 }
 

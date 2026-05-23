@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import type { VehicleCondition } from '../lib/calculator';
+import { calculateAutoLoan, getYearRules, type VehicleCondition } from '../lib/calculator';
 
 interface Vehicle {
   year: number;
@@ -28,6 +28,9 @@ interface Props {
   provinceCode: string;
   vehicleCondition: VehicleCondition;
   vehicleYear: number;
+  downPayment: number;
+  apr: number;
+  termMonths: number;
 }
 
 type LoadState =
@@ -37,13 +40,16 @@ type LoadState =
   | { status: 'empty' }
   | { status: 'error'; message: string; fallback?: ListingsResponse };
 
-const API_BASE = import.meta.env.VITE_LISTINGS_API || 'http://raspberrypi.local:8001';
+const API_BASE = import.meta.env.VITE_LISTINGS_API || '';
+
+const safeUrl = (url: string): string => /^https?:\/\//i.test(url) ? url : '#';
 
 const fmtMileage = (km: number) =>
   km ? `${km.toLocaleString()} km` : '—';
 
-const VehicleListings: React.FC<Props> = ({ maxPrice, provinceCode, vehicleCondition, vehicleYear }) => {
+const VehicleListings: React.FC<Props> = ({ maxPrice, provinceCode, vehicleCondition, vehicleYear, downPayment, apr, termMonths }) => {
   const [state, setState] = useState<LoadState>({ status: 'idle' });
+  const [showAll, setShowAll] = useState(false);
 
   const abortRef = useRef<AbortController | null>(null);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -125,7 +131,11 @@ const VehicleListings: React.FC<Props> = ({ maxPrice, provinceCode, vehicleCondi
         </div>
       )}
 
-      {(state.status === 'loaded' || (state.status === 'error' && state.fallback)) && (
+      {(state.status === 'loaded' || (state.status === 'error' && state.fallback)) && (() => {
+          const raw = state.status === 'loaded' ? state.data.results : state.fallback!.results;
+          const inBudget = raw.filter((v) => v.price <= maxPrice);
+
+          return (
         <>
           <div style={{
             display: 'flex', justifyContent: 'space-between', alignItems: 'center',
@@ -133,7 +143,7 @@ const VehicleListings: React.FC<Props> = ({ maxPrice, provinceCode, vehicleCondi
             borderBottom: '1px solid var(--panel-border)',
           }}>
             <div style={{ fontWeight: 700 }}>
-              {state.status === 'loaded' ? state.data.count : state.fallback!.count} Matching Vehicles
+              {inBudget.length} Vehicles Within Budget
             </div>
             <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
               {state.status === 'loaded'
@@ -153,10 +163,27 @@ const VehicleListings: React.FC<Props> = ({ maxPrice, provinceCode, vehicleCondi
           )}
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-            {(state.status === 'loaded' ? state.data.results : state.fallback!.results).slice(0, 5).map((v) => (
+            {inBudget
+              .slice(0, showAll ? undefined : 5)
+              .map((v) => {
+                const rules = getYearRules(v.year || vehicleYear);
+                const payment = calculateAutoLoan({
+                  vehicleYear: v.year || vehicleYear,
+                  vehiclePrice: v.price,
+                  tradeInValue: 0,
+                  lienAmount: 0,
+                  downPayment,
+                  apr,
+                  termMonths: Math.min(termMonths, rules.maxTermAllowed),
+                  licensingFee: 0,
+                  provinceCode: provinceCode || 'ON',
+                  vehicleCondition: (v.condition as VehicleCondition) || vehicleCondition || 'used',
+                });
+
+                return (
               <a
                 key={v.url}
-                href={v.url}
+                href={safeUrl(v.url)}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="listing-card"
@@ -174,27 +201,34 @@ const VehicleListings: React.FC<Props> = ({ maxPrice, provinceCode, vehicleCondi
                   <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
                     {fmtMileage(v.mileage)} · {v.dealership}, {v.city}
                   </div>
+                  <div style={{ fontSize: '0.75rem', color: 'var(--accent-color)', marginTop: '0.25rem' }}>
+                    Est. ${Math.round(payment.biWeeklyPayment).toLocaleString()}/bi-wk · ${Math.round(payment.monthlyPayment).toLocaleString()}/mo
+                  </div>
                 </div>
                 <div style={{ textAlign: 'right' }}>
                   <div style={{ fontWeight: 700, color: 'var(--success-color)' }}>
                     ${v.price.toLocaleString()}
                   </div>
-                  <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>
-                    ${(maxPrice - v.price).toLocaleString()} below max
-                  </div>
                 </div>
               </a>
-            ))}
+                );
+              })}
           </div>
 
-          {(state.status === 'loaded' ? state.data.count : state.fallback!.count) > 5 && (
-            <div style={{ textAlign: 'center', padding: '0.75rem', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
-              + {(state.status === 'loaded' ? state.data.count : state.fallback!.count) - 5} more results
-              — refine criteria for more specific matches
+          {inBudget.length > 5 && !showAll && (
+            <div style={{ textAlign: 'center', padding: '0.75rem' }}>
+              <button
+                className="mode-toggle"
+                onClick={() => setShowAll(true)}
+                style={{ padding: '0.5rem 2rem', cursor: 'pointer', fontSize: '0.85rem' }}
+              >
+                Show all {inBudget.length} listings
+              </button>
             </div>
           )}
         </>
-      )}
+          );
+        })()}
 
       {state.status === 'empty' && (
         <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-secondary)' }}>

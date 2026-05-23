@@ -94,6 +94,9 @@ const App: React.FC = () => {
           provinceCode={state.inputs.provinceCode || 'ON'}
           vehicleCondition={state.inputs.vehicleCondition || 'used'}
           vehicleYear={state.inputs.vehicleYear}
+          downPayment={state.inputs.downPayment}
+          apr={state.inputs.apr}
+          termMonths={state.inputs.termMonths}
         />
       )}
 
