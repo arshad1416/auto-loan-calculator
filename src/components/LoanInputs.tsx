@@ -91,17 +91,27 @@ const LoanInputs: React.FC<Props> = ({
 
         {reverseMode ? (
           <>
-            {/* APR (read-only) — sits above target payment row */}
+            {/* APR (editable) */}
             <div className="input-group">
               <label>APR (%)</label>
               <input
                 type="number"
-                value={results.minApr}
-                readOnly
-                style={{ opacity: 0.6, cursor: 'not-allowed' }}
+                name="apr"
+                value={inputs.apr}
+                onChange={(e) => onChange('apr', parseFloat(e.target.value) || 0)}
+                step="0.01"
+                style={{ borderColor: inputs.apr < results.minApr && inputs.apr > 0 ? '#f59e0b' : '' }}
               />
-              <div style={{ color: 'var(--text-secondary)', fontSize: '0.7rem', marginTop: '0.2rem' }}>
-                Min for {inputs.vehicleYear}: {results.minApr}%
+              <div style={{
+                color: inputs.apr < results.minApr && inputs.apr > 0 ? '#fbbf24' : 'var(--text-secondary)',
+                fontSize: '0.7rem',
+                marginTop: '0.2rem',
+                fontWeight: inputs.apr < results.minApr && inputs.apr > 0 ? 600 : 400,
+              }}>
+                {inputs.apr < results.minApr && inputs.apr > 0
+                  ? `⚠ Below market rate — min for ${inputs.vehicleYear}: ${results.minApr}%`
+                  : `Min for ${inputs.vehicleYear}: ${results.minApr}%`
+                }
               </div>
             </div>
 

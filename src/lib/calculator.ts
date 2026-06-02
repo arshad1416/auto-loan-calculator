@@ -290,6 +290,7 @@ export interface ReverseInput {
   tradeInValue: number;
   lienAmount: number;
   downPayment: number;
+  apr?: number;
   termMonths: number;
   licensingFee: number;
   provinceCode?: string;
@@ -308,7 +309,7 @@ export const reverseCalculateAutoLoan = (input: ReverseInput): CalculationResult
   const provCode = provinceCode || 'ON';
   const rules = getYearRules(vehicleYear);
   const term = Math.min(termMonths, rules.maxTermAllowed);
-  const apr = rules.minApr;
+  const apr = input.apr ?? rules.minApr;
 
   // Binary search for precision and safety under non-linear BC PST and Federal Luxury Tax curves
   let low = 0;

@@ -62,6 +62,7 @@ function runReverseCalc(state: CalculatorState, overrides: Partial<CalculatorSta
     tradeInValue: s.inputs.tradeInValue,
     lienAmount: s.inputs.lienAmount,
     downPayment: s.inputs.downPayment,
+    apr: s.inputs.apr,
     termMonths: s.inputs.termMonths,
     licensingFee: s.inputs.licensingFee,
     provinceCode: s.inputs.provinceCode,
@@ -167,14 +168,17 @@ export function calculatorReducer(state: CalculatorState, action: CalculatorActi
       if (state.reverseMode) {
         const newInputs = { ...oldInputs, vehicleYear: year };
         const rulesResult = calculateAutoLoan(newInputs);
+        // Clamp APR — if user's APR is below new year's minimum, bump it up
+        const clampedApr = Math.max(newInputs.apr, rulesResult.minApr);
+        const finalInputs = { ...newInputs, apr: clampedApr };
         // Reset term to max for new year
-        const inputsForCalc = { ...newInputs, termMonths: rulesResult.maxTermAllowed };
+        const inputsForCalc = { ...finalInputs, termMonths: rulesResult.maxTermAllowed };
         const results = runReverseCalc({ ...state, inputs: inputsForCalc }, {});
         const finalDown = Math.max(inputsForCalc.downPayment, results.minDownPaymentRequired);
         const inputsWithClampedDown = { ...inputsForCalc, downPayment: finalDown, vehiclePrice: results.maxVehiclePrice };
 
         const adjustments: Adjustment = {
-          apr: null, // APR not user-editable in reverse mode
+          apr: oldInputs.apr !== clampedApr ? { from: oldInputs.apr, to: clampedApr } : null,
           termMonths: oldInputs.termMonths !== inputsForCalc.termMonths ? { from: oldInputs.termMonths, to: inputsForCalc.termMonths } : null,
           downPayment: oldInputs.downPayment !== finalDown ? { from: oldInputs.downPayment, to: finalDown } : null,
         };
