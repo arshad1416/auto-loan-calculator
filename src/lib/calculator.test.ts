@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { calculateAutoLoan, reverseCalculateAutoLoan, getYearRules, PROVINCES, type YearRules } from '../lib/calculator';
-import type { CalculationInput } from '../lib/calculator';
+import { calculateAutoLoan, reverseCalculateAutoLoan } from './calculator';
+import type { CalculationInput } from './calculator';
 
 const baseInput: CalculationInput = {
   vehicleYear: 2024,
