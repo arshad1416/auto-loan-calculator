@@ -93,7 +93,7 @@ export function createInitialState(_skipUrl = false): CalculatorState {
   const results = calculateAutoLoan(inputs);
   inputs.apr = results.minApr;
   inputs.termMonths = Math.min(inputs.termMonths, results.maxTermAllowed);
-  inputs.downPayment = Math.max(inputs.downPayment, results.minDownPaymentRequired);
+  inputs.downPayment = results.minDownPaymentRequired;
 
   const reverseMode = false;
   const targetBiWeeklyPayment = 500;
@@ -112,7 +112,7 @@ export function createInitialState(_skipUrl = false): CalculatorState {
   if (reverseMode) {
     initialState.inputs.termMonths = initialState.results.maxTermAllowed;
     initialState.results = runReverseCalc(initialState, {});
-    initialState.inputs.downPayment = Math.max(0, initialState.results.minDownPaymentRequired);
+    initialState.inputs.downPayment = initialState.results.minDownPaymentRequired;
     initialState.inputs.vehiclePrice = initialState.results.maxVehiclePrice;
     // Re-run with clamped down payment
     initialState.results = runReverseCalc(initialState, {});
@@ -174,13 +174,12 @@ export function calculatorReducer(state: CalculatorState, action: CalculatorActi
         // Reset term to max for new year
         const inputsForCalc = { ...finalInputs, termMonths: rulesResult.maxTermAllowed };
         const results = runReverseCalc({ ...state, inputs: inputsForCalc }, {});
-        const finalDown = Math.max(inputsForCalc.downPayment, results.minDownPaymentRequired);
-        const inputsWithClampedDown = { ...inputsForCalc, downPayment: finalDown, vehiclePrice: results.maxVehiclePrice };
+        const inputsWithClampedDown = { ...inputsForCalc, downPayment: results.minDownPaymentRequired, vehiclePrice: results.maxVehiclePrice };
 
         const adjustments: Adjustment = {
           apr: oldInputs.apr !== clampedApr ? { from: oldInputs.apr, to: clampedApr } : null,
           termMonths: oldInputs.termMonths !== inputsForCalc.termMonths ? { from: oldInputs.termMonths, to: inputsForCalc.termMonths } : null,
-          downPayment: oldInputs.downPayment !== finalDown ? { from: oldInputs.downPayment, to: finalDown } : null,
+          downPayment: oldInputs.downPayment !== results.minDownPaymentRequired ? { from: oldInputs.downPayment, to: results.minDownPaymentRequired } : null,
         };
 
         const finalState = {
@@ -204,7 +203,7 @@ export function calculatorReducer(state: CalculatorState, action: CalculatorActi
         ...newInputs,
         apr: rulesResult.minApr,
         termMonths: rulesResult.maxTermAllowed,
-        downPayment: Math.max(newInputs.downPayment, rulesResult.minDownPaymentRequired),
+        downPayment: rulesResult.minDownPaymentRequired,
       };
 
       const adjustments: Adjustment = {
