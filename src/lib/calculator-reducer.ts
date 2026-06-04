@@ -44,7 +44,7 @@ const DEFAULTS: CalculationInput = {
   lienAmount: 0,
   downPayment: 0,
   apr: 6.99,
-  termMonths: 84,
+  termMonths: 96,
   licensingFee: 59,
   lenderAdminFee: 0,
   dealerAdminFee: 0,

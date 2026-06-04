@@ -73,6 +73,28 @@ const LoanResults: React.FC<Props> = ({ inputs, results, reverseMode, targetBiWe
           </div>
         </div>
 
+        {/* Row 1b: Financing Tier + Max Term */}
+        <div className="metrics-row">
+          <div className="metric">
+            <label>Financing Tier</label>
+            <div className="metric-value" style={{
+              color: results.financingTier === 'Prime' ? '#34a853' :
+                     results.financingTier === 'Limited' ? '#fbbf24' : '#ea4335',
+              fontWeight: 600,
+            }}>
+              {results.financingTier}
+            </div>
+            <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>
+              {results.isBankFinancable ? 'Bank financeable' : results.financingTier === 'Specialty only' ? 'Specialty lender only' : 'Limited availability'}
+            </div>
+          </div>
+          <div className="metric">
+            <label>Max Term Allowed</label>
+            <div className="metric-value">{results.maxTermAllowed} mo</div>
+            <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>Min APR: {results.minApr}%</div>
+          </div>
+        </div>
+
         {/* Row 2: Sales Tax + Amount Financed */}
         <div className="metrics-row">
           <div className="metric">

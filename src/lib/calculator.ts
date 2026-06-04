@@ -1,6 +1,7 @@
 /**
  * Auto Loan Calculator Logic
  * Factors in Ontario-specific taxes (HST 13%), OMVIC fees, lender admin fees, and dealer admin fees.
+ * Financing rules sourced from Canadian lender guidelines (June 2026).
  */
 
 export interface AmortizationPeriod {
@@ -47,6 +48,7 @@ export interface CalculationResult {
   minDownPaymentRequired: number;
   licensingFee: number;
   isBankFinancable: boolean;
+  financingTier: string; // e.g. "Prime", "Limited", "Specialty only"
   schedule: AmortizationPeriod[];
   maxVehiclePrice: number;
   financedNegativeEquity: number;
@@ -103,21 +105,50 @@ interface YearRules {
   maxTermAllowed: number;
   minApr: number;
   isBankFinancable: boolean;
+  financingTier: string;
   minDownPaymentPct: number;
 }
 
-export function getYearRules(vehicleYear: number): YearRules {
-  if (vehicleYear >= 2023) {
-    return { maxTermAllowed: 84, minApr: 6.99, isBankFinancable: true, minDownPaymentPct: 0 };
-  } else if (vehicleYear >= 2021) {
-    return { maxTermAllowed: 72, minApr: 7.99, isBankFinancable: true, minDownPaymentPct: 0 };
-  } else if (vehicleYear >= 2016) {
-    return { maxTermAllowed: 60, minApr: 8.99, isBankFinancable: true, minDownPaymentPct: 0 };
-  } else if (vehicleYear >= 2010) {
-    return { maxTermAllowed: 66, minApr: 14.99, isBankFinancable: true, minDownPaymentPct: 0.10 };
-  } else {
-    return { maxTermAllowed: 48, minApr: 19.99, isBankFinancable: false, minDownPaymentPct: 0.50 };
+export function getYearRules(vehicleYear: number, vehicleCondition?: VehicleCondition): YearRules {
+  const currentYear = 2026;
+
+  // New / low-km vehicles: 2024-2026
+  if (vehicleCondition === 'new' && vehicleYear >= 2024 && vehicleYear <= currentYear) {
+    return { maxTermAllowed: 96, minApr: 6.99, isBankFinancable: true, financingTier: 'Prime', minDownPaymentPct: 0 };
   }
+
+  // Used 2023-2026
+  if (vehicleYear >= 2023) {
+    return { maxTermAllowed: 96, minApr: 6.99, isBankFinancable: true, financingTier: 'Prime', minDownPaymentPct: 0 };
+  }
+
+  // 2021-2022
+  if (vehicleYear >= 2021) {
+    return { maxTermAllowed: 84, minApr: 7.99, isBankFinancable: true, financingTier: 'Prime', minDownPaymentPct: 0 };
+  }
+
+  // 2019-2020
+  if (vehicleYear >= 2019) {
+    return { maxTermAllowed: 84, minApr: 8.99, isBankFinancable: true, financingTier: 'Prime', minDownPaymentPct: 0 };
+  }
+
+  // 2018
+  if (vehicleYear >= 2018) {
+    return { maxTermAllowed: 72, minApr: 9.49, isBankFinancable: true, financingTier: 'Prime', minDownPaymentPct: 0 };
+  }
+
+  // 2017
+  if (vehicleYear >= 2017) {
+    return { maxTermAllowed: 60, minApr: 9.49, isBankFinancable: false, financingTier: 'Limited', minDownPaymentPct: 0 };
+  }
+
+  // 2015-2016
+  if (vehicleYear >= 2015) {
+    return { maxTermAllowed: 48, minApr: 9.49, isBankFinancable: false, financingTier: 'Limited', minDownPaymentPct: 0 };
+  }
+
+  // 2014 & older — Specialty only
+  return { maxTermAllowed: 60, minApr: 12.95, isBankFinancable: false, financingTier: 'Specialty only', minDownPaymentPct: 0 };
 }
 
 export function computeAmortization(
@@ -184,7 +215,7 @@ export function computeLumpSumAmortization(
 export const calculateAutoLoan = (input: CalculationInput): CalculationResult => {
   const { vehicleYear, vehiclePrice, tradeInValue, lienAmount, downPayment, apr, termMonths, licensingFee, provinceCode, vehicleCondition, lenderAdminFee, dealerAdminFee, warranty, safetyCertification, otherFees } = input;
 
-  const rules = getYearRules(vehicleYear);
+  const rules = getYearRules(vehicleYear, input.vehicleCondition);
   const maxTermAllowed = rules.maxTermAllowed;
   const minApr = rules.minApr;
   const isBankFinancable = rules.isBankFinancable;
@@ -268,6 +299,7 @@ export const calculateAutoLoan = (input: CalculationInput): CalculationResult =>
     minApr,
     minDownPaymentRequired,
     isBankFinancable,
+    financingTier: rules.financingTier,
     schedule,
     maxVehiclePrice: Math.round(vehiclePrice),
     financedNegativeEquity,
@@ -307,7 +339,7 @@ export const reverseCalculateAutoLoan = (input: ReverseInput): CalculationResult
   const monthlyTarget = targetMonthlyPayment > 0 ? targetMonthlyPayment : (targetBiWeeklyPayment * 26) / 12;
 
   const provCode = provinceCode || 'ON';
-  const rules = getYearRules(vehicleYear);
+  const rules = getYearRules(vehicleYear, input.vehicleCondition);
   const term = Math.min(termMonths, rules.maxTermAllowed);
   const apr = input.apr ?? rules.minApr;
 
