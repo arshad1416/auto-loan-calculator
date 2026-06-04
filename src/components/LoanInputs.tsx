@@ -263,14 +263,14 @@ const LoanInputs: React.FC<Props> = ({
               type="range"
               name="termMonths"
               min={12}
-              max={84}
+              max={results.maxTermAllowed}
               step={12}
               value={inputs.termMonths}
               onChange={(e) => onChange('termMonths', parseInt(e.target.value) || 12)}
             />
             <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '0.5rem', fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
               <span>12 mo</span>
-              <span style={{ color: isTermTooLong ? 'var(--error-color)' : '' }}>84 mo (7 yr)</span>
+              <span style={{ color: isTermTooLong ? 'var(--error-color)' : '' }}>{results.maxTermAllowed} mo ({Math.round(results.maxTermAllowed / 12)} yr)</span>
             </div>
             {isTermTooLong && (
               <div style={{ color: 'var(--error-color)', fontSize: '0.75rem', marginTop: '0.5rem' }}>
