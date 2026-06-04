@@ -75,22 +75,22 @@ describe('calculateAutoLoan', () => {
     expect(r.minDownPaymentRequired).toBe(Math.round(45000 * 0.10));
   });
 
-  it('2014 & older vehicles: 60mo max, 12.95% min APR, Specialty only tier, 15% down', () => {
-    const r = calculateAutoLoan({ ...baseInput, vehicleYear: 2014, vehiclePrice: 30000 });
+  it('2012-2014 vehicles: 60mo max, 12.95% min APR, Specialty only, 25% down', () => {
+    const r = calculateAutoLoan({ ...baseInput, vehicleYear: 2013, vehiclePrice: 30000 });
     expect(r.maxTermAllowed).toBe(60);
     expect(r.minApr).toBe(12.95);
-    expect(r.minDownPaymentRequired).toBe(Math.round(30000 * 0.15));
+    expect(r.minDownPaymentRequired).toBe(Math.round(30000 * 0.25));
     expect(r.isBankFinancable).toBe(false);
     expect(r.financingTier).toBe('Specialty only');
   });
 
-  it('pre-2010 vehicles: 60mo max, 12.95% min APR, Specialty only, 15% down', () => {
+  it('2011 & older vehicles: 60mo max, 12.95% min APR, Specialty only, 50% down', () => {
     const r = calculateAutoLoan({ ...baseInput, vehicleYear: 2008 });
     expect(r.maxTermAllowed).toBe(60);
     expect(r.minApr).toBe(12.95);
     expect(r.isBankFinancable).toBe(false);
     expect(r.financingTier).toBe('Specialty only');
-    expect(r.minDownPaymentRequired).toBe(Math.round(45000 * 0.15));
+    expect(r.minDownPaymentRequired).toBe(Math.round(45000 * 0.50));
   });
 
   // ── HST / fee calculations ────────────────────────────────────────
@@ -206,9 +206,9 @@ describe('calculateAutoLoan', () => {
     expect(r.minDownPaymentRequired).toBe(7000); // comes from excess, not year rules
   });
 
-  it('lien over 40% cap: excess adds to year-based min down payment', () => {
-    // 2014 vehicle: 15% year-based min down = $4,500, 40% cap on $30,000 = $12,000. Lien of $20,000 → $8,000 excess
-    // minDownPaymentRequired = max($4,500, $8,000) = $8,000
+  it('2014+ lien over 40% cap: excess adds to year-based min down payment', () => {
+    // 2014 vehicle: 25% year-based min down = $7,500, 40% cap on $30,000 = $12,000. Lien of $20,000 → $8,000 excess
+    // minDownPaymentRequired = max($7,500, $8,000) = $8,000
     const r = calculateAutoLoan({ ...baseInput, vehicleYear: 2014, vehiclePrice: 30000, lienAmount: 20000 });
     expect(r.financedNegativeEquity).toBe(12000);
     expect(r.excessNegativeEquity).toBe(8000);
@@ -229,8 +229,8 @@ describe('reverseCalculateAutoLoan', () => {
     const r = reverseCalculateAutoLoan({ targetBiWeeklyPayment: 0, targetMonthlyPayment: 1000, vehicleYear: 2024, tradeInValue: 0, lienAmount: 0, downPayment: 0, termMonths: 84, licensingFee: 56 });
     expect(r.biWeeklyPayment).toBeCloseTo(461.54, 0);
   });
-  it('2014 vehicle gets 12.95% APR, 60mo max term, Specialty only, 15% down', () => {
-    const r = reverseCalculateAutoLoan({ targetBiWeeklyPayment: 400, targetMonthlyPayment: 0, vehicleYear: 2014, tradeInValue: 0, lienAmount: 0, downPayment: 4500, termMonths: 60, licensingFee: 56 });
+  it('2014 vehicle gets 12.95% APR, 60mo max term, Specialty only, 25% down', () => {
+    const r = reverseCalculateAutoLoan({ targetBiWeeklyPayment: 400, targetMonthlyPayment: 0, vehicleYear: 2014, tradeInValue: 0, lienAmount: 0, downPayment: 7500, termMonths: 60, licensingFee: 56 });
     expect(r.maxTermAllowed).toBe(60);
     expect(r.minApr).toBe(12.95);
     expect(r.isBankFinancable).toBe(false);
@@ -246,8 +246,8 @@ describe('reverseCalculateAutoLoan', () => {
     expect(r.financingTier).toBe('Specialty only');
   });
   it('shorter term reduces max vehicle price', () => {
-    const r60 = reverseCalculateAutoLoan({ targetBiWeeklyPayment: 400, targetMonthlyPayment: 0, vehicleYear: 2014, tradeInValue: 0, lienAmount: 0, downPayment: 0, termMonths: 60, licensingFee: 56 });
-    const r48 = reverseCalculateAutoLoan({ targetBiWeeklyPayment: 400, targetMonthlyPayment: 0, vehicleYear: 2014, tradeInValue: 0, lienAmount: 0, downPayment: 0, termMonths: 48, licensingFee: 56 });
+    const r60 = reverseCalculateAutoLoan({ targetBiWeeklyPayment: 400, targetMonthlyPayment: 0, vehicleYear: 2014, tradeInValue: 0, lienAmount: 0, downPayment: 7500, termMonths: 60, licensingFee: 56 });
+    const r48 = reverseCalculateAutoLoan({ targetBiWeeklyPayment: 400, targetMonthlyPayment: 0, vehicleYear: 2014, tradeInValue: 0, lienAmount: 0, downPayment: 7500, termMonths: 48, licensingFee: 56 });
     expect(r48.maxVehiclePrice).toBeLessThan(r60.maxVehiclePrice);
     expect(r48.biWeeklyPayment).toBeCloseTo(400, 0);
   });

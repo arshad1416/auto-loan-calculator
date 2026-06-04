@@ -147,8 +147,13 @@ export function getYearRules(vehicleYear: number, vehicleCondition?: VehicleCond
     return { maxTermAllowed: 48, minApr: 9.49, isBankFinancable: false, financingTier: 'Limited', minDownPaymentPct: 0.10 };
   }
 
-  // 2014 & older — Specialty only
-  return { maxTermAllowed: 60, minApr: 12.95, isBankFinancable: false, financingTier: 'Specialty only', minDownPaymentPct: 0.15 };
+  // 2012-2014
+  if (vehicleYear >= 2012) {
+    return { maxTermAllowed: 60, minApr: 12.95, isBankFinancable: false, financingTier: 'Specialty only', minDownPaymentPct: 0.25 };
+  }
+
+  // 2011 & older
+  return { maxTermAllowed: 60, minApr: 12.95, isBankFinancable: false, financingTier: 'Specialty only', minDownPaymentPct: 0.50 };
 }
 
 export function computeAmortization(
