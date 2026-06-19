@@ -191,11 +191,6 @@ const LoanInputs: React.FC<Props> = ({
                   ? `⚠ Below market rate — min for ${inputs.vehicleYear}: ${results.minApr}%`
                   : `Min for ${inputs.vehicleYear}: ${results.minApr}%`
                 }
-                {inputs.vehicleYear >= 2023 && inputs.vehiclePrice < 20000 && (
-                  <div style={{ marginTop: '0.15rem', color: '#fbbf24' }}>
-                    6.99% promo requires a minimum selling price of $20,000
-                  </div>
-                )}
               </div>
             </div>
           </>

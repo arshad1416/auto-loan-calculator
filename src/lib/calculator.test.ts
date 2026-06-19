@@ -33,25 +33,6 @@ describe('calculateAutoLoan', () => {
     expect(r.financingTier).toBe('Prime');
   });
 
-  // ── 6.99% promo price floor ($20,000 minimum selling price for 2023+) ──
-
-  it('2023+ vehicle under $20,000 falls back to 7.99% (promo needs $20k min)', () => {
-    const r = calculateAutoLoan({ ...baseInput, vehicleYear: 2024, vehiclePrice: 15000, downPayment: 0 });
-    expect(r.minApr).toBe(7.99);
-    expect(r.maxTermAllowed).toBe(96); // term stays based on year+condition
-    expect(r.isBankFinancable).toBe(true);
-  });
-
-  it('2023+ vehicle at exactly $20,000 qualifies for 6.99%', () => {
-    const r = calculateAutoLoan({ ...baseInput, vehicleYear: 2024, vehiclePrice: 20000, downPayment: 0 });
-    expect(r.minApr).toBe(6.99);
-  });
-
-  it('2023+ vehicle at $19,999 does not qualify for 6.99% (falls back to 7.99%)', () => {
-    const r = calculateAutoLoan({ ...baseInput, vehicleYear: 2024, vehiclePrice: 19999, downPayment: 0 });
-    expect(r.minApr).toBe(7.99);
-  });
-
   it('2021-2022 vehicles: 84mo max, 7.99% min APR, Prime tier', () => {
     const r = calculateAutoLoan({ ...baseInput, vehicleYear: 2021 });
     expect(r.maxTermAllowed).toBe(84);
@@ -245,13 +226,6 @@ describe('reverseCalculateAutoLoan', () => {
     expect(r.biWeeklyPayment).toBeCloseTo(500, 0);
   });
 
-  it('2023+ reverse calc uses 7.99% when max price falls under the $20,000 floor', () => {
-    // Low target payment → max vehicle price < $20,000 → 6.99% promo unavailable
-    const r = reverseCalculateAutoLoan({ targetBiWeeklyPayment: 100, targetMonthlyPayment: 0, vehicleYear: 2024, tradeInValue: 0, lienAmount: 0, downPayment: 0, termMonths: 84, licensingFee: 56 });
-    expect(r.maxVehiclePrice).toBeGreaterThan(0);
-    expect(r.maxVehiclePrice).toBeLessThan(20000);
-    expect(r.minApr).toBe(7.99);
-  });
   it('converts target monthly to bi-weekly automatically', () => {
     const r = reverseCalculateAutoLoan({ targetBiWeeklyPayment: 0, targetMonthlyPayment: 1000, vehicleYear: 2024, tradeInValue: 0, lienAmount: 0, downPayment: 0, termMonths: 84, licensingFee: 56 });
     expect(r.biWeeklyPayment).toBeCloseTo(461.54, 0);

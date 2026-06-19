@@ -109,20 +109,17 @@ interface YearRules {
   minDownPaymentPct: number;
 }
 
-export function getYearRules(vehicleYear: number, vehicleCondition?: VehicleCondition, vehiclePrice: number = 0): YearRules {
+export function getYearRules(vehicleYear: number, vehicleCondition?: VehicleCondition): YearRules {
   const currentYear = 2026;
-  // The 6.99% promo rate requires a minimum selling price of $20,000 for 2023+
-  // vehicles (including new). Below that, it falls back to 7.99%.
-  const promoMinApr = vehiclePrice >= 20000 ? 6.99 : 7.99;
 
   // New / low-km vehicles: 2024-2026
   if (vehicleCondition === 'new' && vehicleYear >= 2024 && vehicleYear <= currentYear) {
-    return { maxTermAllowed: 96, minApr: promoMinApr, isBankFinancable: true, financingTier: 'Prime', minDownPaymentPct: 0 };
+    return { maxTermAllowed: 96, minApr: 6.99, isBankFinancable: true, financingTier: 'Prime', minDownPaymentPct: 0 };
   }
 
   // Used 2023-2026
   if (vehicleYear >= 2023) {
-    return { maxTermAllowed: 96, minApr: promoMinApr, isBankFinancable: true, financingTier: 'Prime', minDownPaymentPct: 0 };
+    return { maxTermAllowed: 96, minApr: 6.99, isBankFinancable: true, financingTier: 'Prime', minDownPaymentPct: 0 };
   }
 
   // 2021-2022
@@ -223,7 +220,7 @@ export function computeLumpSumAmortization(
 export const calculateAutoLoan = (input: CalculationInput): CalculationResult => {
   const { vehicleYear, vehiclePrice, tradeInValue, lienAmount, downPayment, apr, termMonths, licensingFee, provinceCode, vehicleCondition, lenderAdminFee, dealerAdminFee, warranty, safetyCertification, otherFees } = input;
 
-  const rules = getYearRules(vehicleYear, input.vehicleCondition, vehiclePrice);
+  const rules = getYearRules(vehicleYear, input.vehicleCondition);
   const maxTermAllowed = rules.maxTermAllowed;
   const minApr = rules.minApr;
   const isBankFinancable = rules.isBankFinancable;
@@ -347,10 +344,10 @@ export const reverseCalculateAutoLoan = (input: ReverseInput): CalculationResult
   const monthlyTarget = targetMonthlyPayment > 0 ? targetMonthlyPayment : (targetBiWeeklyPayment * 26) / 12;
 
   const provCode = provinceCode || 'ON';
-  // Term is condition-based; APR is price-dependent (6.99% promo requires a $20k
-  // minimum selling price for 2023+), so it is recomputed per candidate price.
-  const rules = getYearRules(vehicleYear, input.vehicleCondition, 0);
+  // Term is condition-based.
+  const rules = getYearRules(vehicleYear, input.vehicleCondition);
   const term = Math.min(termMonths, rules.maxTermAllowed);
+  const apr = input.apr ?? rules.minApr;
 
   // Binary search for precision and safety under non-linear BC PST and Federal Luxury Tax curves
   let low = 0;
@@ -367,14 +364,13 @@ export const reverseCalculateAutoLoan = (input: ReverseInput): CalculationResult
 
     let res: CalculationResult;
     try {
-      const loopApr = getYearRules(vehicleYear, input.vehicleCondition, mid).minApr;
       res = calculateAutoLoan({
         vehicleYear,
         vehiclePrice: mid,
         tradeInValue,
         lienAmount,
         downPayment: Math.max(downPayment, minDownRequiredOverall),
-        apr: loopApr,
+        apr,
         termMonths: term,
         licensingFee,
         provinceCode: provCode,
@@ -406,14 +402,13 @@ export const reverseCalculateAutoLoan = (input: ReverseInput): CalculationResult
 
   let forwardResult: CalculationResult;
   try {
-    const finalApr = getYearRules(vehicleYear, input.vehicleCondition, finalPrice).minApr;
     forwardResult = calculateAutoLoan({
       vehicleYear,
       vehiclePrice: finalPrice,
       tradeInValue,
       lienAmount,
       downPayment: Math.max(downPayment, minDownRequiredOverall),
-      apr: finalApr,
+      apr,
       termMonths: term,
       licensingFee,
       provinceCode: provCode,
@@ -430,7 +425,7 @@ export const reverseCalculateAutoLoan = (input: ReverseInput): CalculationResult
       tradeInValue: 0,
       lienAmount: 0,
       downPayment: 0,
-      apr: getYearRules(vehicleYear, input.vehicleCondition, 0).minApr,
+      apr,
       termMonths: term,
       licensingFee,
       provinceCode: provCode,

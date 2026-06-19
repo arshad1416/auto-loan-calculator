@@ -166,7 +166,7 @@ const VehicleListings: React.FC<Props> = ({ maxPrice, provinceCode, vehicleCondi
             {inBudget
               .slice(0, showAll ? undefined : 5)
               .map((v) => {
-                const rules = getYearRules(v.year || vehicleYear, v.condition as VehicleCondition, v.price);
+                const rules = getYearRules(v.year || vehicleYear);
                 const payment = calculateAutoLoan({
                   vehicleYear: v.year || vehicleYear,
                   vehiclePrice: v.price,
