@@ -45,7 +45,7 @@ Vehicle year determines the maximum loan term, minimum APR, and down payment flo
 
 | Vehicle Year | Max Term | Min APR | Min Down Payment | Bank Financeable |
 |---|---|---|---|---|
-| 2023+ | 84 months (7 yr) | 6.99% | None | Yes |
+| 2023+ | 84 months (7 yr) | 6.99%³ | None | Yes |
 | 2021–2022 | 72 months (6 yr) | 7.99% | None | Yes |
 | 2016–2020 | 60 months (5 yr) | 8.99% | None | Yes |
 | 2010–2015 | 66 months (5.5 yr) | 14.99% | 10% of vehicle price | Yes |
@@ -71,6 +71,7 @@ Vehicle year determines the maximum loan term, minimum APR, and down payment flo
 
 ¹ BC PST is progressive: 7% under $55K, 8% $55K–$56K, 9% $56K–$57K, 10% $57K–$125K, 15% $125K–$150K, 20% over $150K
 ² NS HST was 14% before April 2025, now 15%
+³ The 6.99% promo rate for 2023+ vehicles requires a minimum selling price of $20,000. Below that floor the rate falls back to 7.99% (the 2021–2022 tier); the 84-month max term is unchanged.
 
 Trade-in value is applied pre-tax and reduces the taxable amount. Licensing fee syncs to the province default when switching provinces.
 

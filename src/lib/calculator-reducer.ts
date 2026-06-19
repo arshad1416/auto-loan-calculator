@@ -1,4 +1,4 @@
-import { calculateAutoLoan, reverseCalculateAutoLoan, PROVINCES } from './calculator';
+import { calculateAutoLoan, reverseCalculateAutoLoan, getYearRules, PROVINCES } from './calculator';
 import type { CalculationInput, CalculationResult } from './calculator';
 
 // ── Types ───────────────────────────────────────────────────────────
@@ -149,6 +149,11 @@ export function calculatorReducer(state: CalculatorState, action: CalculatorActi
         if (province) {
           newInputs = { ...newInputs, licensingFee: province.defaultLicensingFee, lenderAdminFee: action.value === 'ON' ? 2000 : 0 };
         }
+      }
+      // The 6.99% promo rate requires a $20,000 minimum selling price for 2023+
+      // vehicles, so re-derive APR from the year+price rules when the price changes.
+      if (action.field === 'vehiclePrice') {
+        newInputs = { ...newInputs, apr: getYearRules(newInputs.vehicleYear, newInputs.vehicleCondition, Number(newInputs.vehiclePrice) || 0).minApr };
       }
       return {
         ...state,
