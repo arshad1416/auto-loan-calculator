@@ -50,9 +50,7 @@ body {
 h1 {
   font-size: 2.5rem;
   font-weight: 800;
-  background: linear-gradient(to right, #ffffff, var(--accent-color));
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
+  color: var(--text-primary);
   margin-bottom: 0.5rem;
 }
 

@@ -253,8 +253,11 @@ export const calculateAutoLoan = (input: CalculationInput): CalculationResult =>
   const excessNegativeEquity = Math.max(0, negativeEquity - maxFinanceableNegativeEquity);
   const financedLien = lienAmount - excessNegativeEquity;
 
+  // Net positive equity from trade counts toward minimum down payment
+  const netTradeEquity = Math.max(0, tradeInValue - lienAmount);
   const minDownPaymentRequired = Math.max(
-    Math.round(vehiclePrice * rules.minDownPaymentPct),
+    0,
+    Math.round(vehiclePrice * rules.minDownPaymentPct) - netTradeEquity,
     excessNegativeEquity,
   );
 
@@ -360,7 +363,8 @@ export const reverseCalculateAutoLoan = (input: ReverseInput): CalculationResult
     const negativeEquity = Math.max(0, netTradeEffect);
     const maxFinanceable = Math.round(mid * NEGATIVE_EQUITY_CAP);
     const excessNegativeEquity = Math.max(0, negativeEquity - maxFinanceable);
-    const minDownRequiredOverall = Math.max(Math.round(mid * rules.minDownPaymentPct), excessNegativeEquity);
+    const netTradeEquity = Math.max(0, tradeInValue - lienAmount);
+    const minDownRequiredOverall = Math.max(0, Math.round(mid * rules.minDownPaymentPct) - netTradeEquity, excessNegativeEquity);
 
     let res: CalculationResult;
     try {
@@ -398,7 +402,8 @@ export const reverseCalculateAutoLoan = (input: ReverseInput): CalculationResult
   const negativeEquity = Math.max(0, netTradeEffect);
   const maxFinanceable = Math.round(finalPrice * NEGATIVE_EQUITY_CAP);
   const excessNegativeEquity = Math.max(0, negativeEquity - maxFinanceable);
-  const minDownRequiredOverall = Math.max(Math.round(finalPrice * rules.minDownPaymentPct), excessNegativeEquity);
+  const netTradeEquity = Math.max(0, tradeInValue - lienAmount);
+  const minDownRequiredOverall = Math.max(0, Math.round(finalPrice * rules.minDownPaymentPct) - netTradeEquity, excessNegativeEquity);
 
   let forwardResult: CalculationResult;
   try {

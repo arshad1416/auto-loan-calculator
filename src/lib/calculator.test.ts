@@ -216,6 +216,49 @@ describe('calculateAutoLoan', () => {
     // Loan principal uses capped lien ($12,000), not full $20,000
     expect(r.loanPrincipal).toBeGreaterThan(0);
   });
+
+  // ── Trade-in equity counts toward minimum down payment ─────────────
+
+  it('trade-in equity reduces minimum down payment (2012-2014, 25% rule)', () => {
+    // 2013 vehicle with 25% min down: $30,000 × 25% = $7,500
+    // Trade-in $5,000 with $0 lien → netTradeEquity = $5,000
+    // minDownPaymentRequired = max(0, $7,500 - $5,000, $0) = $2,500
+    const r = calculateAutoLoan({
+      ...baseInput, vehicleYear: 2013, vehiclePrice: 30000,
+      tradeInValue: 5000, lienAmount: 0, downPayment: 2500,
+    });
+    expect(r.minDownPaymentRequired).toBe(2500);
+  });
+
+  it('trade-in equity can fully cover the minimum down payment (2015-2016, 10% rule)', () => {
+    // 2015 vehicle with 10% min down: $45,000 × 10% = $4,500
+    // Trade-in $10,000 with $0 lien → netTradeEquity = $10,000
+    // minDownPaymentRequired = max(0, $4,500 - $10,000, $0) = $0
+    const r = calculateAutoLoan({
+      ...baseInput, vehicleYear: 2015, tradeInValue: 10000, lienAmount: 0,
+    });
+    expect(r.minDownPaymentRequired).toBe(0);
+  });
+
+  it('no trade-in still produces correct minimum down payment', () => {
+    // 2013 vehicle with $30k, no trade-in → $7,500 min down (25%)
+    const r = calculateAutoLoan({ ...baseInput, vehicleYear: 2013, vehiclePrice: 30000, tradeInValue: 0, lienAmount: 0 });
+    expect(r.minDownPaymentRequired).toBe(7500);
+  });
+
+  it('negative equity (lien > tradeInValue) does not get false credit', () => {
+    // 2013 vehicle with 25% min down: $30,000 × 25% = $7,500
+    // tradeIn $3,000, lien $8,000 → netTradeEffect = $5,000 (negative equity)
+    // netTradeEquity = max(0, $3,000 - $8,000) = $0 → no reduction
+    // 40% cap on $30k = $12,000, excess = $0 (since $5k < $12k)
+    // minDownPaymentRequired = max(0, $7,500 - $0, $0) = $7,500
+    const r = calculateAutoLoan({
+      ...baseInput, vehicleYear: 2013, vehiclePrice: 30000,
+      tradeInValue: 3000, lienAmount: 8000, downPayment: 7500,
+    });
+    expect(r.excessNegativeEquity).toBe(0);
+    expect(r.minDownPaymentRequired).toBe(7500);
+  });
 });
 
 describe('reverseCalculateAutoLoan', () => {
@@ -258,6 +301,23 @@ describe('reverseCalculateAutoLoan', () => {
     const withLien = reverseCalculateAutoLoan({ targetBiWeeklyPayment: 400, targetMonthlyPayment: 0, vehicleYear: 2024, tradeInValue: 0, lienAmount: 15000, downPayment: 0, termMonths: 84, licensingFee: 56 });
     // Lien exceeding 40% cap should reduce maxPrice since less negative equity is financeable
     expect(withLien.maxVehiclePrice).toBeLessThan(noLien.maxVehiclePrice);
+  });
+
+  it('trade-in equity increases max vehicle price in reverse mode (2014 vehicle, 25% down)', () => {
+    // 2014 Specialty-only vehicle: 25% min down. No trade: minDownRequiredOverall = 25% of price.
+    // With trade-in of $5k (0 lien): minDownRequiredOverall = max(0, 25% price - $5k, $0).
+    // Lower constraint → can afford higher-priced vehicle.
+    const noTrade = reverseCalculateAutoLoan({
+      targetBiWeeklyPayment: 400, targetMonthlyPayment: 0,
+      vehicleYear: 2014, tradeInValue: 0, lienAmount: 0,
+      downPayment: 7500, termMonths: 60, licensingFee: 56,
+    });
+    const withTrade = reverseCalculateAutoLoan({
+      targetBiWeeklyPayment: 400, targetMonthlyPayment: 0,
+      vehicleYear: 2014, tradeInValue: 5000, lienAmount: 0,
+      downPayment: 7500, termMonths: 60, licensingFee: 56,
+    });
+    expect(withTrade.maxVehiclePrice).toBeGreaterThan(noTrade.maxVehiclePrice);
   });
 });
 
