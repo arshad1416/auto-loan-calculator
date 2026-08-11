@@ -48,7 +48,7 @@ export interface CalculationResult {
   minDownPaymentRequired: number;
   licensingFee: number;
   isBankFinancable: boolean;
-  financingTier: string; // e.g. "Prime", "Limited", "Specialty only"
+  financingTier: string; // e.g. "Prime", "Limited", "Specialty"
   schedule: AmortizationPeriod[];
   maxVehiclePrice: number;
   financedNegativeEquity: number;
@@ -129,31 +129,31 @@ export function getYearRules(vehicleYear: number, vehicleCondition?: VehicleCond
 
   // 2019-2020
   if (vehicleYear >= 2019) {
-    return { maxTermAllowed: 84, minApr: 7.99, isBankFinancable: true, financingTier: 'Prime', minDownPaymentPct: 0 };
+    return { maxTermAllowed: 78, minApr: 7.99, isBankFinancable: true, financingTier: 'Prime', minDownPaymentPct: 0 };
   }
 
   // 2018
   if (vehicleYear >= 2018) {
-    return { maxTermAllowed: 72, minApr: 8.99, isBankFinancable: true, financingTier: 'Prime', minDownPaymentPct: 0 };
+    return { maxTermAllowed: 60, minApr: 8.99, isBankFinancable: true, financingTier: 'Prime', minDownPaymentPct: 0 };
   }
 
   // 2017
   if (vehicleYear >= 2017) {
-    return { maxTermAllowed: 72, minApr: 8.99, isBankFinancable: false, financingTier: 'Limited', minDownPaymentPct: 0.05 };
+    return { maxTermAllowed: 54, minApr: 8.99, isBankFinancable: false, financingTier: 'Limited', minDownPaymentPct: 0.05 };
   }
 
   // 2015-2016
   if (vehicleYear >= 2015) {
-    return { maxTermAllowed: 48, minApr: 9.99, isBankFinancable: false, financingTier: 'Limited', minDownPaymentPct: 0.10 };
+    return { maxTermAllowed: 42, minApr: 9.99, isBankFinancable: false, financingTier: 'Limited', minDownPaymentPct: 0.10 };
   }
 
   // 2012-2014
   if (vehicleYear >= 2012) {
-    return { maxTermAllowed: 72, minApr: 16.90, isBankFinancable: false, financingTier: 'Specialty only', minDownPaymentPct: 0.25 };
+    return { maxTermAllowed: 72, minApr: 16.90, isBankFinancable: false, financingTier: 'Specialty', minDownPaymentPct: 0.25 };
   }
 
   // 2011 & older
-  return { maxTermAllowed: 60, minApr: 16.90, isBankFinancable: false, financingTier: 'Specialty only', minDownPaymentPct: 0.50 };
+  return { maxTermAllowed: 36, minApr: 16.90, isBankFinancable: false, financingTier: 'Specialty', minDownPaymentPct: 0.50 };
 }
 
 export function computeAmortization(
