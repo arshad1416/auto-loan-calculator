@@ -91,9 +91,9 @@ const LoanInputs: React.FC<Props> = ({
 
         {reverseMode ? (
           <>
-            {/* APR (editable) */}
+            {/* Interest Rate (editable) */}
             <div className="input-group">
-              <label>APR (%)</label>
+              <label>Interest Rate (%)</label>
               <input
                 type="number"
                 name="apr"
@@ -170,9 +170,9 @@ const LoanInputs: React.FC<Props> = ({
               />
             </div>
 
-            {/* APR */}
+            {/* Interest Rate */}
             <div className="input-group">
-              <label>APR (%)</label>
+              <label>Interest Rate (%)</label>
               <input
                 type="number"
                 name="apr"

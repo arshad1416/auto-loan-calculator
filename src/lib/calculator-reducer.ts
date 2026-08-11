@@ -168,7 +168,7 @@ export function calculatorReducer(state: CalculatorState, action: CalculatorActi
       if (state.reverseMode) {
         const newInputs = { ...oldInputs, vehicleYear: year };
         const rulesResult = calculateAutoLoan(newInputs);
-        // Clamp APR — if user's APR is below new year's minimum, bump it up
+        // Clamp rate — if user's rate is below new year's minimum, bump it up
         const clampedApr = Math.max(newInputs.apr, rulesResult.minApr);
         const finalInputs = { ...newInputs, apr: clampedApr };
         // Reset term to max for new year

@@ -65,7 +65,7 @@ const LoanResults: React.FC<Props> = ({ inputs, results, reverseMode, targetBiWe
             <div className="metric-value">
               {inputs.termMonths} mo <span style={{ color: 'var(--text-secondary)', fontWeight: 400 }}>({Math.round(inputs.termMonths / 12)} yr)</span>
             </div>
-            <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>@ {inputs.apr}% APR</div>
+            <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>@ {inputs.apr}% Interest Rate</div>
           </div>
           <div className="metric">
             <label>Condition</label>

@@ -23,7 +23,7 @@ const App: React.FC = () => {
     ? (() => {
         const parts: string[] = [];
         if (state.adjustments.apr) {
-          parts.push(`APR adjusted to ${state.adjustments.apr.to}%`);
+          parts.push(`Interest rate adjusted to ${state.adjustments.apr.to}%`);
         }
         if (state.adjustments.termMonths) {
           parts.push(`term adjusted to ${state.adjustments.termMonths.to} months`);
