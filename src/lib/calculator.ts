@@ -28,6 +28,7 @@ export interface CalculationInput {
   vehicleCondition?: VehicleCondition;
   lenderAdminFee?: number;
   dealerAdminFee?: number;
+  ppsaFee?: number;
   warranty?: number;
   safetyCertification?: number;
   otherFees?: number;
@@ -58,12 +59,21 @@ export interface CalculationResult {
   regulatingFeeName?: string;
   lenderAdminFee: number;
   dealerAdminFee: number;
+  ppsaFee: number;
   warranty: number;
   safetyCertification: number;
   otherFees: number;
 }
 
 const NEGATIVE_EQUITY_CAP = 0.40; // Max % of vehicle price that can be rolled in as negative equity
+
+/**
+ * PPSA / government security-registration fee, financed on every contract reviewed.
+ * APPROXIMATE — the actual fee varies by lender and term. Observed across 20 signed 2026 contracts:
+ * $32-$99 (National Bank $32-$88 government portion, Northlake $99, Santander/CIBC $60.25).
+ * Override per deal rather than relying on this default.
+ */
+const DEFAULT_PPSA_FEE = 60;
 
 export interface ProvinceData {
   code: string;
@@ -117,9 +127,14 @@ export function getYearRules(vehicleYear: number, vehicleCondition?: VehicleCond
     return { maxTermAllowed: 96, minApr: 6.99, isBankFinancable: true, financingTier: 'Prime', minDownPaymentPct: 0 };
   }
 
-  // Used 2023-2026
+  // Used 2023-2026 — 96mo: CIBC Auto Finance publishes up to 96 months on new OR used through the
+  // dealer channel, vehicle up to 10 years old, with "maximum term must equal amortization" (so it is
+  // a true 96-month contract, not a long amortization on a short term). TD is consistent.
+  // NOTE: every subprime sheet on the panel caps at 84, so 96 is reachable only on prime-tier
+  // placements. Because the reducer snaps term to this maximum on a year change, 96 also becomes the
+  // default quote for a 2023+ — see calculator-reducer SET_YEAR.
   if (vehicleYear >= 2023) {
-    return { maxTermAllowed: 84, minApr: 7.99, isBankFinancable: true, financingTier: 'Prime', minDownPaymentPct: 0 };
+    return { maxTermAllowed: 96, minApr: 6.99, isBankFinancable: true, financingTier: 'Prime', minDownPaymentPct: 0 };
   }
 
   // 2021-2022
@@ -127,33 +142,46 @@ export function getYearRules(vehicleYear: number, vehicleCondition?: VehicleCond
     return { maxTermAllowed: 84, minApr: 7.99, isBankFinancable: true, financingTier: 'Prime', minDownPaymentPct: 0 };
   }
 
-  // 2019-2020
+  // 2019-2020 — 7.99% observed on National Bank contracts (2026)
   if (vehicleYear >= 2019) {
-    return { maxTermAllowed: 78, minApr: 7.99, isBankFinancable: true, financingTier: 'Prime', minDownPaymentPct: 0 };
+    // 84: a 2020 was written at 84 months by National Bank (2026 contract).
+    return { maxTermAllowed: 84, minApr: 7.99, isBankFinancable: true, financingTier: 'Prime', minDownPaymentPct: 0 };
   }
 
-  // 2018
+  // 2018 — 8.99% observed on National Bank contracts (2026)
   if (vehicleYear >= 2018) {
-    return { maxTermAllowed: 60, minApr: 8.99, isBankFinancable: true, financingTier: 'Prime', minDownPaymentPct: 0 };
+    // 72: a 2018 was written at 72 months by Northlake, and Northlake's Apr-2026 booking
+    // guide still allows 72 on a 2018 Extra Clean (0-100,000 km).
+    return { maxTermAllowed: 72, minApr: 8.99, isBankFinancable: true, financingTier: 'Prime', minDownPaymentPct: 0 };
   }
 
-  // 2017
+  // 2017 — bank financable: National Bank funded a 2017 at 8.99% (2026)
   if (vehicleYear >= 2017) {
-    return { maxTermAllowed: 54, minApr: 8.99, isBankFinancable: false, financingTier: 'Limited', minDownPaymentPct: 0.05 };
+    // 60: Northlake (Apr 2026) and iA (May 2025) both cap a 2017 at 60 months on Clean.
+    // Bank financable: National Bank funded a 2017 at 8.99% (2026 contract).
+    return { maxTermAllowed: 60, minApr: 8.99, isBankFinancable: true, financingTier: 'Prime', minDownPaymentPct: 0.05 };
   }
 
-  // 2015-2016
+  // 2015-2016 — bank financable: National Bank (2015) and CIBC (2016) both funded (2026).
   if (vehicleYear >= 2015) {
-    return { maxTermAllowed: 42, minApr: 9.99, isBankFinancable: false, financingTier: 'Limited', minDownPaymentPct: 0.10 };
+    // 48: Northlake (Apr 2026) and iA (May 2025) both allow 48 on a 2015/2016 Clean.
+    // 9.99% observed on both the 2015 (National Bank) and 2016 (CIBC) contracts.
+    // Bank financable: National Bank funded a 2015, CIBC funded a 2016 (2026 contracts).
+    return { maxTermAllowed: 48, minApr: 9.99, isBankFinancable: true, financingTier: 'Prime', minDownPaymentPct: 0.10 };
   }
 
-  // 2012-2014
+  // 2012-2014 — 42mo: Quantifi's Vintage grid (2011-2015 Clean, <=125,000 km) allows 42, and a live
+  // Northlake DealerCenter test on a 2013 returned a 42-month maximum. The previous 72mo/16.90%
+  // came from a LendCare contract; LendCare has since exited auto finance, so it no longer
+  // describes anything placeable. 12.95% is Rifco's published Sunset floor.
   if (vehicleYear >= 2012) {
-    return { maxTermAllowed: 72, minApr: 16.90, isBankFinancable: false, financingTier: 'Specialty', minDownPaymentPct: 0.25 };
+    return { maxTermAllowed: 42, minApr: 12.95, isBankFinancable: false, financingTier: 'Specialty', minDownPaymentPct: 0.25 };
   }
 
-  // 2011 & older
-  return { maxTermAllowed: 36, minApr: 16.90, isBankFinancable: false, financingTier: 'Specialty', minDownPaymentPct: 0.50 };
+  // 2011 & older — 36mo kept: sits between Quantifi's 2006-2010 Vintage band (30) and its
+  // 2011-2015 band (42). Coarse bucket; a 2011 and a 2006 are not really the same deal.
+  // Nothing on the panel finances below 2006. 12.95% is Rifco's published Sunset floor.
+  return { maxTermAllowed: 36, minApr: 12.95, isBankFinancable: false, financingTier: 'Specialty', minDownPaymentPct: 0.50 };
 }
 
 export function computeAmortization(
@@ -218,7 +246,7 @@ export function computeLumpSumAmortization(
 }
 
 export const calculateAutoLoan = (input: CalculationInput): CalculationResult => {
-  const { vehicleYear, vehiclePrice, tradeInValue, lienAmount, downPayment, apr, termMonths, licensingFee, provinceCode, vehicleCondition, lenderAdminFee, dealerAdminFee, warranty, safetyCertification, otherFees } = input;
+  const { vehicleYear, vehiclePrice, tradeInValue, lienAmount, downPayment, apr, termMonths, licensingFee, provinceCode, vehicleCondition, lenderAdminFee, dealerAdminFee, ppsaFee, warranty, safetyCertification, otherFees } = input;
 
   const rules = getYearRules(vehicleYear, input.vehicleCondition);
   const maxTermAllowed = rules.maxTermAllowed;
@@ -232,6 +260,8 @@ export const calculateAutoLoan = (input: CalculationInput): CalculationResult =>
   // Lender (bank) admin fee defaults to $2,000 in ON, $0 elsewhere
   const lenderAdmin = lenderAdminFee ?? (provCode === 'ON' ? 2000 : 0);
   const dealerAdmin = dealerAdminFee ?? 0;
+  // PPSA is a government registration fee: financed, but not taxable (same treatment as licensing).
+  const ppsa = ppsaFee ?? DEFAULT_PPSA_FEE;
   const warrantyFee = warranty ?? 0;
   const safetyFee = safetyCertification ?? 0;
   const otherFeeAmount = otherFees ?? 0;
@@ -269,7 +299,7 @@ export const calculateAutoLoan = (input: CalculationInput): CalculationResult =>
   const totalTax = gst + pst + hstAmount;
 
   // 4. Calculate Loan Principal
-  const loanPrincipal = Math.max(0, taxableAmount + totalTax + licensingFee + financedLien - downPayment);
+  const loanPrincipal = Math.max(0, taxableAmount + totalTax + licensingFee + ppsa + financedLien - downPayment);
 
   // 5. Monthly Payment Formula
   const monthlyRate = apr / 100 / 12;
@@ -317,6 +347,7 @@ export const calculateAutoLoan = (input: CalculationInput): CalculationResult =>
     regulatingFeeName: province.regulatingFeeName,
     lenderAdminFee: lenderAdmin,
     dealerAdminFee: dealerAdmin,
+    ppsaFee: ppsa,
     warranty: warrantyFee,
     safetyCertification: safetyFee,
     otherFees: otherFeeAmount,
@@ -337,13 +368,14 @@ export interface ReverseInput {
   vehicleCondition?: VehicleCondition;
   lenderAdminFee?: number;
   dealerAdminFee?: number;
+  ppsaFee?: number;
   warranty?: number;
   safetyCertification?: number;
   otherFees?: number;
 }
 
 export const reverseCalculateAutoLoan = (input: ReverseInput): CalculationResult => {
-  const { targetBiWeeklyPayment, targetMonthlyPayment, vehicleYear, tradeInValue, lienAmount, downPayment, termMonths, licensingFee, provinceCode, vehicleCondition, lenderAdminFee, dealerAdminFee, warranty, safetyCertification, otherFees } = input;
+  const { targetBiWeeklyPayment, targetMonthlyPayment, vehicleYear, tradeInValue, lienAmount, downPayment, termMonths, licensingFee, provinceCode, vehicleCondition, lenderAdminFee, dealerAdminFee, ppsaFee, warranty, safetyCertification, otherFees } = input;
   const monthlyTarget = targetMonthlyPayment > 0 ? targetMonthlyPayment : (targetBiWeeklyPayment * 26) / 12;
 
   const provCode = provinceCode || 'ON';
@@ -381,6 +413,7 @@ export const reverseCalculateAutoLoan = (input: ReverseInput): CalculationResult
         vehicleCondition,
         lenderAdminFee,
         dealerAdminFee,
+        ppsaFee,
         warranty,
         safetyCertification,
         otherFees,
@@ -418,7 +451,9 @@ export const reverseCalculateAutoLoan = (input: ReverseInput): CalculationResult
       licensingFee,
       provinceCode: provCode,
       vehicleCondition,
+      lenderAdminFee,
       dealerAdminFee,
+      ppsaFee,
       warranty,
       safetyCertification,
       otherFees,

@@ -163,6 +163,7 @@ const LoanResults: React.FC<Props> = ({ inputs, results, reverseMode, targetBiWe
         {selectedProv.regulatingFee > 0 && `, $${selectedProv.regulatingFee} ${selectedProv.regulatingFeeName}`}
         {results.lenderAdminFee > 0 && `, $${results.lenderAdminFee.toLocaleString()} Lender Admin`}
         {results.dealerAdminFee > 0 && `, $${results.dealerAdminFee.toLocaleString()} Dealer Admin`}
+        {results.ppsaFee > 0 && `, $${results.ppsaFee.toLocaleString()} PPSA (approx.)`}
         {results.warranty > 0 && `, $${results.warranty.toLocaleString()} Warranty`}
         {results.safetyCertification > 0 && `, $${results.safetyCertification.toLocaleString()} Safety Cert`}
         {results.otherFees > 0 && `, $${results.otherFees.toLocaleString()} Other Fees`}

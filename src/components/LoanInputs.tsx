@@ -8,6 +8,8 @@ interface Props {
   targetBiWeeklyPayment: number;
   targetMonthlyPayment: number;
   onChange: (field: keyof CalculationInput, value: number | string) => void;
+  onCommitDownPayment: () => void;
+  downPaymentRaised: boolean;
   onYearChange: (year: number) => void;
   onToggleMode: () => void;
   onTargetBiWeeklyChange: (value: number) => void;
@@ -25,12 +27,14 @@ const parseFormatted = (raw: string): number => Math.min(parseFloat(raw.replace(
 const LoanInputs: React.FC<Props> = ({
   inputs, results, reverseMode,
   targetBiWeeklyPayment, targetMonthlyPayment,
-  onChange, onYearChange, onToggleMode,
+  onChange, onCommitDownPayment, downPaymentRaised, onYearChange, onToggleMode,
   onTargetBiWeeklyChange, onTargetMonthlyChange,
   onReset,
 }) => {
   const isTermTooLong = inputs.termMonths > results.maxTermAllowed;
   const isDownPaymentTooLow = inputs.downPayment < results.minDownPaymentRequired;
+  // Red while the entry is short, and still red just after we raised it, so the change is noticed.
+  const flagDownPayment = isDownPaymentTooLow || downPaymentRaised;
 
   return (
     <div className="glass-panel">
@@ -206,15 +210,19 @@ const LoanInputs: React.FC<Props> = ({
             name="downPayment"
             value={inputs.downPayment ? fmt(inputs.downPayment) : ''}
             onChange={(e) => onChange('downPayment', parseFormatted(e.target.value))}
-            style={{ borderColor: isDownPaymentTooLow ? 'var(--error-color)' : '' }}
+            onBlur={onCommitDownPayment}
+            style={{ borderColor: flagDownPayment ? 'var(--error-color)' : '' }}
           />
           {results.minDownPaymentRequired > 0 && (
             <div style={{
-              color: isDownPaymentTooLow ? 'var(--error-color)' : 'var(--text-secondary)',
+              color: flagDownPayment ? 'var(--error-color)' : 'var(--text-secondary)',
               fontSize: '0.7rem',
               marginTop: '0.2rem',
+              fontWeight: flagDownPayment ? 600 : 400,
             }}>
-              Min Down Required: ${results.minDownPaymentRequired.toLocaleString()}
+              {downPaymentRaised
+                ? `Raised to the minimum for ${inputs.vehicleYear}: $${results.minDownPaymentRequired.toLocaleString()}`
+                : `Min Down Required: $${results.minDownPaymentRequired.toLocaleString()}`}
             </div>
           )}
         </div>
@@ -284,7 +292,7 @@ const LoanInputs: React.FC<Props> = ({
       {/* Additional Fees & Products */}
       <div style={{ marginTop: '2rem', paddingTop: '1.5rem', borderTop: '1px solid var(--panel-border)' }}>
         <label style={{ marginBottom: '1rem', color: 'var(--text-primary)', fontSize: '0.9rem', fontWeight: 600 }}>
-          Additional Fees & Products (all taxable)
+          Additional Fees & Products (taxable except PPSA)
         </label>
         <div className="input-grid">
           <div className="input-group">
@@ -304,6 +312,18 @@ const LoanInputs: React.FC<Props> = ({
               value={inputs.dealerAdminFee ? fmt(inputs.dealerAdminFee) : ''}
               onChange={(e) => onChange('dealerAdminFee', parseFormatted(e.target.value))}
             />
+          </div>
+          <div className="input-group">
+            <label>PPSA Fee ($)</label>
+            <input
+              type="text"
+              inputMode="numeric"
+              value={inputs.ppsaFee !== undefined ? fmt(inputs.ppsaFee) : ''}
+              onChange={(e) => onChange('ppsaFee', parseFormatted(e.target.value))}
+            />
+            <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', marginTop: '0.2rem' }}>
+              Approximate — varies by lender ($32–$99). Financed, not taxed.
+            </div>
           </div>
           <div className="input-group">
             <label>Warranty ($)</label>

@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { calculateAutoLoan, reverseCalculateAutoLoan } from './calculator';
 import type { CalculationInput } from './calculator';
+import { calculatorReducer, createInitialState } from './calculator-reducer';
 
 const baseInput: CalculationInput = {
   vehicleYear: 2024,
@@ -16,10 +17,10 @@ const baseInput: CalculationInput = {
 describe('calculateAutoLoan', () => {
   // ── Year-based lending rules ──────────────────────────────────────
 
-  it('2023+ vehicles: 84mo max, 7.99% min APR, no down payment required, Prime tier', () => {
+  it('2023+ vehicles: 96mo max, 6.99% min APR, no down payment required, Prime tier', () => {
     const r = calculateAutoLoan({ ...baseInput, vehicleYear: 2023 });
-    expect(r.maxTermAllowed).toBe(84);
-    expect(r.minApr).toBe(7.99);
+    expect(r.maxTermAllowed).toBe(96);
+    expect(r.minApr).toBe(6.99);
     expect(r.minDownPaymentRequired).toBe(0);
     expect(r.isBankFinancable).toBe(true);
     expect(r.financingTier).toBe('Prime');
@@ -41,53 +42,55 @@ describe('calculateAutoLoan', () => {
     expect(r.financingTier).toBe('Prime');
   });
 
-  it('2019-2020 vehicles: 78mo max, 7.99% min APR, Prime tier', () => {
+  it('2019-2020 vehicles: 84mo max, 7.99% min APR, Prime tier', () => {
     const r = calculateAutoLoan({ ...baseInput, vehicleYear: 2019 });
-    expect(r.maxTermAllowed).toBe(78);
+    expect(r.maxTermAllowed).toBe(84);
     expect(r.minApr).toBe(7.99);
     expect(r.isBankFinancable).toBe(true);
     expect(r.financingTier).toBe('Prime');
   });
 
-  it('2018 vehicles: 60mo max, 8.99% min APR, Prime tier', () => {
+  it('2018 vehicles: 72mo max, 8.99% min APR, Prime tier', () => {
     const r = calculateAutoLoan({ ...baseInput, vehicleYear: 2018 });
-    expect(r.maxTermAllowed).toBe(60);
+    expect(r.maxTermAllowed).toBe(72);
     expect(r.minApr).toBe(8.99);
     expect(r.isBankFinancable).toBe(true);
     expect(r.financingTier).toBe('Prime');
   });
 
-  it('2017 vehicles: 54mo max, 8.99% min APR, Limited tier, 5% down', () => {
+  // 2015-2017 are bank financable: 2026 contracts show National Bank funding a 2015 and a 2017,
+  // and CIBC funding a 2016.
+  it('2017 vehicles: 60mo max, 8.99% min APR, Prime tier, 5% down', () => {
     const r = calculateAutoLoan({ ...baseInput, vehicleYear: 2017 });
-    expect(r.maxTermAllowed).toBe(54);
+    expect(r.maxTermAllowed).toBe(60);
     expect(r.minApr).toBe(8.99);
-    expect(r.isBankFinancable).toBe(false);
-    expect(r.financingTier).toBe('Limited');
+    expect(r.isBankFinancable).toBe(true);
+    expect(r.financingTier).toBe('Prime');
     expect(r.minDownPaymentRequired).toBe(Math.round(45000 * 0.05));
   });
 
-  it('2015-2016 vehicles: 42mo max, 9.99% min APR, Limited tier, 10% down', () => {
+  it('2015-2016 vehicles: 48mo max, 9.99% min APR, Prime tier, 10% down', () => {
     const r = calculateAutoLoan({ ...baseInput, vehicleYear: 2015 });
-    expect(r.maxTermAllowed).toBe(42);
+    expect(r.maxTermAllowed).toBe(48);
     expect(r.minApr).toBe(9.99);
-    expect(r.isBankFinancable).toBe(false);
-    expect(r.financingTier).toBe('Limited');
+    expect(r.isBankFinancable).toBe(true);
+    expect(r.financingTier).toBe('Prime');
     expect(r.minDownPaymentRequired).toBe(Math.round(45000 * 0.10));
   });
 
-  it('2012-2014 vehicles: 72mo max, 16.90% min APR, Specialty, 25% down', () => {
+  it('2012-2014 vehicles: 42mo max, 12.95% min APR, Specialty, 25% down', () => {
     const r = calculateAutoLoan({ ...baseInput, vehicleYear: 2013, vehiclePrice: 30000 });
-    expect(r.maxTermAllowed).toBe(72);
-    expect(r.minApr).toBe(16.90);
+    expect(r.maxTermAllowed).toBe(42);
+    expect(r.minApr).toBe(12.95);
     expect(r.minDownPaymentRequired).toBe(Math.round(30000 * 0.25));
     expect(r.isBankFinancable).toBe(false);
     expect(r.financingTier).toBe('Specialty');
   });
 
-  it('2011 & older vehicles: 36mo max, 16.90% min APR, Specialty, 50% down', () => {
+  it('2011 & older vehicles: 36mo max, 12.95% min APR, Specialty, 50% down', () => {
     const r = calculateAutoLoan({ ...baseInput, vehicleYear: 2008 });
     expect(r.maxTermAllowed).toBe(36);
-    expect(r.minApr).toBe(16.90);
+    expect(r.minApr).toBe(12.95);
     expect(r.isBankFinancable).toBe(false);
     expect(r.financingTier).toBe('Specialty');
     expect(r.minDownPaymentRequired).toBe(Math.round(45000 * 0.50));
@@ -109,12 +112,23 @@ describe('calculateAutoLoan', () => {
     expect(withTrade.loanPrincipal).toBeLessThan(noTrade.loanPrincipal);
   });
 
-  it('includes OMVIC ($22), licensing ($56), and admin ($2000) fees', () => {
+  it('includes OMVIC ($22), licensing ($56), admin ($2000) and PPSA ($60) fees', () => {
     // taxable = 45000 - 0 + 2000 + 22 = 47022
     // HST = 47022 * 0.13 = 6112.86
-    // loan principal = 47022 + 6112.86 + 56 - 5000 = 48190.86
+    // PPSA ($60 default) is financed but NOT taxable, same as licensing
+    // loan principal = 47022 + 6112.86 + 56 + 60 - 5000 = 48250.86
     const r = calculateAutoLoan(baseInput);
-    expect(r.loanPrincipal).toBeCloseTo(48190.86, 1);
+    expect(r.loanPrincipal).toBeCloseTo(48250.86, 1);
+    expect(r.ppsaFee).toBe(60);
+  });
+
+  it('PPSA is financed but not taxed, and can be overridden per deal', () => {
+    const base = calculateAutoLoan(baseInput);
+    const withPpsa = calculateAutoLoan({ ...baseInput, ppsaFee: 99 });
+    // $39 more financed than the $60 default, and no change to tax
+    expect(withPpsa.loanPrincipal).toBeCloseTo(base.loanPrincipal + 39, 1);
+    expect(withPpsa.hst).toBeCloseTo(base.hst, 1);
+    expect(calculateAutoLoan({ ...baseInput, ppsaFee: 0 }).loanPrincipal).toBeCloseTo(base.loanPrincipal - 60, 1);
   });
 
   // ── Payment math ──────────────────────────────────────────────────
@@ -162,8 +176,8 @@ describe('calculateAutoLoan', () => {
 
   it('zero vehicle price results in zero or near-zero payments', () => {
     const r = calculateAutoLoan({ ...baseInput, vehiclePrice: 0, downPayment: 0 });
-    // Only fees: taxable = 2022, HST = 262.86, principal = 2022 + 262.86 + 56 = 2340.86
-    expect(r.loanPrincipal).toBeCloseTo(2340.86, 1);
+    // Only fees: taxable = 2022, HST = 262.86, principal = 2022 + 262.86 + 56 + 60 (PPSA) = 2400.86
+    expect(r.loanPrincipal).toBeCloseTo(2400.86, 1);
   });
 
   it('large down payment wipes out the loan', () => {
@@ -264,8 +278,9 @@ describe('calculateAutoLoan', () => {
 describe('reverseCalculateAutoLoan', () => {
   it('calculates max vehicle price from target bi-weekly payment', () => {
     const r = reverseCalculateAutoLoan({ targetBiWeeklyPayment: 500, targetMonthlyPayment: 0, vehicleYear: 2024, tradeInValue: 0, lienAmount: 0, downPayment: 0, termMonths: 84, licensingFee: 56 });
-    expect(r.maxVehiclePrice).toBeGreaterThan(58000);
-    expect(r.maxVehiclePrice).toBeLessThan(60000);
+    // Bounds reflect the 2023+ floor of 6.99% (no apr passed, so minApr is used).
+    expect(r.maxVehiclePrice).toBeGreaterThan(60000);
+    expect(r.maxVehiclePrice).toBeLessThan(63000);
     expect(r.biWeeklyPayment).toBeCloseTo(500, 0);
   });
 
@@ -273,26 +288,28 @@ describe('reverseCalculateAutoLoan', () => {
     const r = reverseCalculateAutoLoan({ targetBiWeeklyPayment: 0, targetMonthlyPayment: 1000, vehicleYear: 2024, tradeInValue: 0, lienAmount: 0, downPayment: 0, termMonths: 84, licensingFee: 56 });
     expect(r.biWeeklyPayment).toBeCloseTo(461.54, 0);
   });
-  it('2014 vehicle gets 16.90% APR, 72mo max term, Specialty, 25% down', () => {
+  it('2014 vehicle gets 12.95% APR, 42mo max term, Specialty, 25% down', () => {
     const r = reverseCalculateAutoLoan({ targetBiWeeklyPayment: 400, targetMonthlyPayment: 0, vehicleYear: 2014, tradeInValue: 0, lienAmount: 0, downPayment: 7500, termMonths: 60, licensingFee: 56 });
-    expect(r.maxTermAllowed).toBe(72);
-    expect(r.minApr).toBe(16.90);
+    expect(r.maxTermAllowed).toBe(42);
+    expect(r.minApr).toBe(12.95);
     expect(r.isBankFinancable).toBe(false);
     expect(r.financingTier).toBe('Specialty');
     expect(r.loanPrincipal).toBeGreaterThan(0);
     expect(r.schedule.length).toBeGreaterThan(0);
   });
-  it('pre-2010 vehicle gets 16.90% APR, 36mo, Specialty', () => {
+  it('pre-2010 vehicle gets 12.95% APR, 36mo, Specialty', () => {
     const r = reverseCalculateAutoLoan({ targetBiWeeklyPayment: 300, targetMonthlyPayment: 0, vehicleYear: 2008, tradeInValue: 0, lienAmount: 0, downPayment: 0, termMonths: 36, licensingFee: 56 });
     expect(r.maxTermAllowed).toBe(36);
-    expect(r.minApr).toBe(16.90);
+    expect(r.minApr).toBe(12.95);
     expect(r.isBankFinancable).toBe(false);
     expect(r.financingTier).toBe('Specialty');
   });
+  // Uses a 2024 so both terms sit under maxTermAllowed. On an old-year vehicle both requested terms
+  // would clamp to the year cap and produce identical prices, which tests the clamp, not the term.
   it('shorter term reduces max vehicle price', () => {
-    const r60 = reverseCalculateAutoLoan({ targetBiWeeklyPayment: 400, targetMonthlyPayment: 0, vehicleYear: 2014, tradeInValue: 0, lienAmount: 0, downPayment: 7500, termMonths: 60, licensingFee: 56 });
-    const r48 = reverseCalculateAutoLoan({ targetBiWeeklyPayment: 400, targetMonthlyPayment: 0, vehicleYear: 2014, tradeInValue: 0, lienAmount: 0, downPayment: 7500, termMonths: 48, licensingFee: 56 });
-    expect(r48.maxVehiclePrice).toBeLessThan(r60.maxVehiclePrice);
+    const r72 = reverseCalculateAutoLoan({ targetBiWeeklyPayment: 400, targetMonthlyPayment: 0, vehicleYear: 2024, tradeInValue: 0, lienAmount: 0, downPayment: 7500, termMonths: 72, licensingFee: 56 });
+    const r48 = reverseCalculateAutoLoan({ targetBiWeeklyPayment: 400, targetMonthlyPayment: 0, vehicleYear: 2024, tradeInValue: 0, lienAmount: 0, downPayment: 7500, termMonths: 48, licensingFee: 56 });
+    expect(r48.maxVehiclePrice).toBeLessThan(r72.maxVehiclePrice);
     expect(r48.biWeeklyPayment).toBeCloseTo(400, 0);
   });
 
@@ -537,5 +554,59 @@ describe('Additional fees & products', () => {
     });
     // $3,000 warranty should reduce max vehicle price since budget is fixed
     expect(withFees.maxVehiclePrice).toBeLessThan(noFees.maxVehiclePrice);
+  });
+});
+
+// ── Reducer behaviour ─────────────────────────────────────────────────
+
+describe('calculatorReducer', () => {
+  const withPrice = (price: number) =>
+    calculatorReducer(createInitialState(), { type: 'SET_FIELD', field: 'vehiclePrice', value: price });
+
+  it('remembers the term chosen for each year across year switches', () => {
+    let s = withPrice(30000);
+    s = calculatorReducer(s, { type: 'SET_YEAR', year: 2018 });
+    expect(s.inputs.termMonths).toBe(72); // no prior pick -> year max
+
+    s = calculatorReducer(s, { type: 'SET_FIELD', field: 'termMonths', value: 48 });
+    expect(s.inputs.termMonths).toBe(48);
+
+    s = calculatorReducer(s, { type: 'SET_YEAR', year: 2023 });
+    expect(s.inputs.termMonths).toBe(96); // no pick for 2023 -> year max
+
+    s = calculatorReducer(s, { type: 'SET_YEAR', year: 2018 });
+    expect(s.inputs.termMonths).toBe(48); // the 2018 pick is restored
+  });
+
+  it('caps a remembered term that exceeds a later year maximum', () => {
+    let s = withPrice(30000);
+    s = calculatorReducer(s, { type: 'SET_YEAR', year: 2023 });
+    s = calculatorReducer(s, { type: 'SET_FIELD', field: 'termMonths', value: 96 });
+    s = calculatorReducer(s, { type: 'SET_YEAR', year: 2013 });
+    expect(s.inputs.termMonths).toBe(42); // 2012-2014 max, not the remembered 96
+  });
+
+  it('keeps the entered down payment when the year changes, even if now below minimum', () => {
+    let s = withPrice(20000);
+    s = calculatorReducer(s, { type: 'SET_YEAR', year: 2016 });
+    s = calculatorReducer(s, { type: 'SET_FIELD', field: 'downPayment', value: 3000 });
+    s = calculatorReducer(s, { type: 'SET_YEAR', year: 2013 }); // needs 25% = $5,000
+    expect(s.inputs.downPayment).toBe(3000); // not discarded
+    expect(s.results.minDownPaymentRequired).toBe(5000); // note tells the user
+    expect(s.downPaymentRaised).toBe(false);
+  });
+
+  it('raises a short down payment to the minimum on blur and flags it', () => {
+    let s = withPrice(30000);
+    s = calculatorReducer(s, { type: 'SET_YEAR', year: 2013 });
+    s = calculatorReducer(s, { type: 'SET_FIELD', field: 'downPayment', value: 1000 });
+    expect(s.inputs.downPayment).toBe(1000); // typing is never interrupted
+
+    s = calculatorReducer(s, { type: 'COMMIT_DOWN_PAYMENT' });
+    expect(s.inputs.downPayment).toBe(7500); // 25% of 30000
+    expect(s.downPaymentRaised).toBe(true);
+
+    s = calculatorReducer(s, { type: 'SET_FIELD', field: 'downPayment', value: 9000 });
+    expect(s.downPaymentRaised).toBe(false); // flag clears once the user edits again
   });
 });

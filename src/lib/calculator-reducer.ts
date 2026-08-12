@@ -17,10 +17,15 @@ export interface CalculatorState {
   reverseMode: boolean;
   targetBiWeeklyPayment: number;
   targetMonthlyPayment: number;
+  /** Terms the user picked, keyed by vehicle year, so switching years and back restores their choice. */
+  termByYear: Record<number, number>;
+  /** True when we raised the down payment to the year's minimum, so the note can stay red. */
+  downPaymentRaised: boolean;
 }
 
 export type CalculatorAction =
   | { type: 'SET_FIELD'; field: keyof CalculationInput; value: number | string }
+  | { type: 'COMMIT_DOWN_PAYMENT' }
   | { type: 'SET_YEAR'; year: number }
   | { type: 'TOGGLE_SCHEDULE' }
   | { type: 'DISMISS_ADJUSTMENTS' }
@@ -48,6 +53,7 @@ const DEFAULTS: CalculationInput = {
   licensingFee: 59,
   lenderAdminFee: 0,
   dealerAdminFee: 0,
+  ppsaFee: 60, // approximate — varies by lender, $32-$99 observed on 2026 contracts
   warranty: 0,
   safetyCertification: 0,
   otherFees: 0,
@@ -107,6 +113,8 @@ export function createInitialState(_skipUrl = false): CalculatorState {
     reverseMode,
     targetBiWeeklyPayment,
     targetMonthlyPayment,
+    termByYear: {},
+    downPaymentRaised: false,
   };
 
   if (reverseMode) {
@@ -122,6 +130,22 @@ export function createInitialState(_skipUrl = false): CalculatorState {
 }
 
 // ── Reducer ─────────────────────────────────────────────────────────
+
+/** Records a manually chosen term against the current vehicle year. */
+function rememberTerm(
+  state: CalculatorState,
+  action: { field: keyof CalculationInput },
+  newInputs: CalculationInput,
+): Record<number, number> {
+  if (action.field !== 'termMonths') return state.termByYear;
+  return { ...state.termByYear, [newInputs.vehicleYear]: newInputs.termMonths };
+}
+
+/** Term to use when switching to `year`: the user's earlier pick for that year, else the year's max. */
+function termForYear(state: CalculatorState, year: number, maxTermAllowed: number): number {
+  const remembered = state.termByYear[year];
+  return Math.min(remembered ?? maxTermAllowed, maxTermAllowed);
+}
 
 export function calculatorReducer(state: CalculatorState, action: CalculatorAction): CalculatorState {
   switch (action.type) {
@@ -141,6 +165,8 @@ export function calculatorReducer(state: CalculatorState, action: CalculatorActi
           inputs: { ...newInputs, vehiclePrice: results.maxVehiclePrice },
           results,
           adjustments: null,
+          termByYear: rememberTerm(state, action, newInputs),
+          downPaymentRaised: action.field === 'downPayment' ? false : state.downPaymentRaised,
         };
       }
       let newInputs = { ...state.inputs, [action.field]: action.value };
@@ -155,6 +181,37 @@ export function calculatorReducer(state: CalculatorState, action: CalculatorActi
         inputs: newInputs,
         results: calculateAutoLoan(newInputs),
         adjustments: null,
+        termByYear: rememberTerm(state, action, newInputs),
+        // Editing the down payment clears the "we raised it" flag; it re-arms on the next commit.
+        downPaymentRaised: action.field === 'downPayment' ? false : state.downPaymentRaised,
+      };
+    }
+
+    // Fired on blur. Typing is left alone so the user can key through "5" on the way to "5000";
+    // only once they leave the field do we raise a short down payment to the year's minimum.
+    case 'COMMIT_DOWN_PAYMENT': {
+      const required = state.results.minDownPaymentRequired;
+      if (state.inputs.downPayment >= required) {
+        return state.downPaymentRaised ? { ...state, downPaymentRaised: false } : state;
+      }
+      const newInputs = { ...state.inputs, downPayment: required };
+      if (state.reverseMode) {
+        const newState = { ...state, inputs: newInputs };
+        const results = runReverseCalc(newState, {});
+        return {
+          ...state,
+          inputs: { ...newInputs, vehiclePrice: results.maxVehiclePrice },
+          results,
+          adjustments: null,
+          downPaymentRaised: true,
+        };
+      }
+      return {
+        ...state,
+        inputs: newInputs,
+        results: calculateAutoLoan(newInputs),
+        adjustments: null,
+        downPaymentRaised: true,
       };
     }
 
@@ -168,30 +225,34 @@ export function calculatorReducer(state: CalculatorState, action: CalculatorActi
       if (state.reverseMode) {
         const newInputs = { ...oldInputs, vehicleYear: year };
         const rulesResult = calculateAutoLoan(newInputs);
-        // Clamp rate — if user's rate is below new year's minimum, bump it up
-        const clampedApr = Math.max(newInputs.apr, rulesResult.minApr);
+        // minApr is advisory, not a floor: keep the user's rate on a year change. Real lender rates
+        // are set by credit tier, not model year, so a rate below minApr is legitimate. The rate input
+        // shows a "below market rate" warning instead of silently overriding the entered value.
+        const clampedApr = newInputs.apr;
         const finalInputs = { ...newInputs, apr: clampedApr };
-        // Reset term to max for new year
-        const inputsForCalc = { ...finalInputs, termMonths: rulesResult.maxTermAllowed };
+        // Restore the term the user previously chose for this year; otherwise use the year's max.
+        const inputsForCalc = { ...finalInputs, termMonths: termForYear(state, year, rulesResult.maxTermAllowed) };
+        // The down payment is left as entered. The "Min Down Required" note tells the user what the
+        // new year needs; it is only raised on blur (COMMIT_DOWN_PAYMENT).
         const results = runReverseCalc({ ...state, inputs: inputsForCalc }, {});
-        const inputsWithClampedDown = { ...inputsForCalc, downPayment: results.minDownPaymentRequired, vehiclePrice: results.maxVehiclePrice };
+        const inputsWithClampedDown = { ...inputsForCalc, vehiclePrice: results.maxVehiclePrice };
 
         const adjustments: Adjustment = {
-          apr: oldInputs.apr !== clampedApr ? { from: oldInputs.apr, to: clampedApr } : null,
+          apr: null,
           termMonths: oldInputs.termMonths !== inputsForCalc.termMonths ? { from: oldInputs.termMonths, to: inputsForCalc.termMonths } : null,
-          downPayment: oldInputs.downPayment !== results.minDownPaymentRequired ? { from: oldInputs.downPayment, to: results.minDownPaymentRequired } : null,
+          downPayment: null,
         };
 
         const finalState = {
           ...state,
           inputs: inputsWithClampedDown,
           results: runReverseCalc({ ...state, inputs: inputsWithClampedDown }, {}),
+          downPaymentRaised: false,
         };
 
-        const hasAdj = adjustments.termMonths || adjustments.downPayment;
         return {
           ...finalState,
-          adjustments: hasAdj ? adjustments : null,
+          adjustments: adjustments.termMonths ? adjustments : null,
         };
       }
 
@@ -201,15 +262,18 @@ export function calculatorReducer(state: CalculatorState, action: CalculatorActi
 
       const finalInputs = {
         ...newInputs,
+        // Rate still re-seeds from the year: the tool is an estimate keyed on year/price/down payment.
         apr: rulesResult.minApr,
-        termMonths: rulesResult.maxTermAllowed,
-        downPayment: rulesResult.minDownPaymentRequired,
+        // Restore the term the user previously chose for this year; otherwise use the year's max.
+        termMonths: termForYear(state, year, rulesResult.maxTermAllowed),
+        // Down payment is left as entered — the "Min Down Required" note communicates the new
+        // requirement, and it is only raised on blur (COMMIT_DOWN_PAYMENT).
       };
 
       const adjustments: Adjustment = {
         apr: oldInputs.apr !== finalInputs.apr ? { from: oldInputs.apr, to: finalInputs.apr } : null,
         termMonths: oldInputs.termMonths !== finalInputs.termMonths ? { from: oldInputs.termMonths, to: finalInputs.termMonths } : null,
-        downPayment: oldInputs.downPayment !== finalInputs.downPayment ? { from: oldInputs.downPayment, to: finalInputs.downPayment } : null,
+        downPayment: null,
       };
 
       const hasAdjustments = adjustments.apr || adjustments.termMonths || adjustments.downPayment;
