@@ -63,6 +63,8 @@ const App: React.FC = () => {
           targetBiWeeklyPayment={state.targetBiWeeklyPayment}
           targetMonthlyPayment={state.targetMonthlyPayment}
           onChange={(field, value) => dispatch({ type: 'SET_FIELD', field, value: value as number })}
+          onCommitDownPayment={() => dispatch({ type: 'COMMIT_DOWN_PAYMENT' })}
+          downPaymentRaised={state.downPaymentRaised}
           onYearChange={(year) => dispatch({ type: 'SET_YEAR', year })}
           onToggleMode={() => dispatch({ type: 'TOGGLE_MODE' })}
           onTargetBiWeeklyChange={(value) => dispatch({ type: 'SET_TARGET_BIWEEKLY', value })}
