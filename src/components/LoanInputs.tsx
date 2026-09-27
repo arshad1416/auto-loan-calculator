@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import type { CalculationInput, CalculationResult, VehicleCondition } from '../lib/calculator';
 import { PROVINCES } from '../lib/calculator';
-import type { AvailableRate } from '../lib/desjardins';
 
 interface Props {
   inputs: CalculationInput;
@@ -84,67 +83,33 @@ const LoanInputs: React.FC<Props> = ({
     ? termStops.indexOf(inputs.termMonths)
     : nearestStopIndex(inputs.termMonths, termStops);
 
-  // Reserve-backed rate picker: the Desjardins sheet only pays reserve on some
-  // rate/amount combinations, so unbacked rates are not offered as choices.
-  const availableRates: AvailableRate[] = results.availableAprs ?? [];
-  const aprOnSheet = availableRates.some((r) => Math.abs(r.apr - inputs.apr) < 0.005);
-  const [customRateMode, setCustomRateMode] = useState(false);
-  const showRateList = availableRates.length > 0 && !customRateMode && aprOnSheet;
-  // The CARF guideline floor only applies where no lender rate sheet governs
-  // the deal; backed-list deals are governed by reserve availability instead.
-  const belowMarket = availableRates.length === 0 && inputs.apr < results.minApr && inputs.apr > 0;
+  // minApr is advisory (real lender rates are set by credit tier, not model
+  // year): the input shows a guideline warning instead of overriding the value.
+  // Reserve-based rate availability is computed on results for internal use
+  // only — it is deliberately not surfaced in this UI.
+  const belowMarket = inputs.apr < results.minApr && inputs.apr > 0;
 
   const interestRateField = (
     <div className="input-group">
       <label>Interest Rate (%)</label>
-      {showRateList ? (
-        <select
-          name="apr"
-          value={String(inputs.apr)}
-          onChange={(e) => {
-            const v = e.target.value;
-            if (v === 'custom') { setCustomRateMode(true); return; }
-            setCustomRateMode(false);
-            onChange('apr', parseFloat(v));
-          }}
-        >
-          {availableRates.map((r) => (
-            <option key={r.apr} value={String(r.apr)}>
-              {r.apr}%{r.kind === 'promo' ? ' (promo)' : ''} — reserve {r.reservePct}%
-            </option>
-          ))}
-          <option value="custom">Custom rate…</option>
-        </select>
-      ) : (
-        <input
-          type="number"
-          name="apr"
-          value={inputs.apr}
-          onChange={(e) => onChange('apr', parseFloat(e.target.value) || 0)}
-          step="0.01"
-          style={{ borderColor: belowMarket ? '#f59e0b' : '' }}
-        />
-      )}
-      {showRateList && (
-        <div style={{ color: 'var(--text-secondary)', fontSize: '0.7rem', marginTop: '0.2rem' }}>
-          Rates with no Desjardins reserve at this amount are excluded. Use Custom rate… for other lenders.
-        </div>
-      )}
-      {!showRateList && availableRates.length > 0 && !aprOnSheet && (
-        <div style={{ color: 'var(--error-color)', fontSize: '0.7rem', marginTop: '0.2rem', fontWeight: 600 }}>
-          ⚠ {inputs.apr}% has no reserve at ${Math.round(results.loanPrincipal).toLocaleString()} financed — not available. Lowest backed rate: {availableRates[0].apr}%
-        </div>
-      )}
-      {belowMarket && (
-        <div style={{ color: '#fbbf24', fontSize: '0.7rem', marginTop: '0.2rem', fontWeight: 600 }}>
-          ⚠ Below CARF guideline rate — guideline min for {inputs.vehicleYear}: {results.minApr}%
-        </div>
-      )}
-      {!showRateList && !belowMarket && availableRates.length === 0 && (
-        <div style={{ color: 'var(--text-secondary)', fontSize: '0.7rem', marginTop: '0.2rem' }}>
-          CARF guideline min for {inputs.vehicleYear}: {results.minApr}%
-        </div>
-      )}
+      <input
+        type="number"
+        name="apr"
+        value={inputs.apr}
+        onChange={(e) => onChange('apr', parseFloat(e.target.value) || 0)}
+        step="0.01"
+        style={{ borderColor: belowMarket ? '#f59e0b' : '' }}
+      />
+      <div style={{
+        color: belowMarket ? '#fbbf24' : 'var(--text-secondary)',
+        fontSize: '0.7rem',
+        marginTop: '0.2rem',
+        fontWeight: belowMarket ? 600 : 400,
+      }}>
+        {belowMarket
+          ? `⚠ Below CARF guideline rate — guideline min for ${inputs.vehicleYear}: ${results.minApr}%`
+          : `CARF guideline min for ${inputs.vehicleYear}: ${results.minApr}%`}
+      </div>
     </div>
   );
 
