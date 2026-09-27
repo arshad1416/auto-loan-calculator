@@ -57,6 +57,7 @@ const DEFAULTS: CalculationInput = {
   warranty: 0,
   safetyCertification: 0,
   otherFees: 0,
+  insuranceProducts: 0,
 };
 
 function runReverseCalc(state: CalculatorState, overrides: Partial<CalculatorState>): CalculationResult {
@@ -78,6 +79,7 @@ function runReverseCalc(state: CalculatorState, overrides: Partial<CalculatorSta
     warranty: s.inputs.warranty,
     safetyCertification: s.inputs.safetyCertification,
     otherFees: s.inputs.otherFees,
+    insuranceProducts: s.inputs.insuranceProducts,
   });
 }
 
@@ -230,8 +232,12 @@ export function calculatorReducer(state: CalculatorState, action: CalculatorActi
         // shows a "below market rate" warning instead of silently overriding the entered value.
         const clampedApr = newInputs.apr;
         const finalInputs = { ...newInputs, apr: clampedApr };
-        // Restore the term the user previously chose for this year; otherwise use the year's max.
-        const inputsForCalc = { ...finalInputs, termMonths: termForYear(state, year, rulesResult.maxTermAllowed) };
+        // Restore the term the user previously chose for this year; otherwise use the year's max,
+        // snapped to the Desjardins-placeable term in ON (the slider keeps the full panel range).
+        const reverseDefaultMax = rulesResult.desjardinsMaxTerm > 0
+          ? Math.min(rulesResult.maxTermAllowed, rulesResult.desjardinsMaxTerm)
+          : rulesResult.maxTermAllowed;
+        const inputsForCalc = { ...finalInputs, termMonths: termForYear(state, year, reverseDefaultMax) };
         // The down payment is left as entered. The "Min Down Required" note tells the user what the
         // new year needs; it is only raised on blur (COMMIT_DOWN_PAYMENT).
         const results = runReverseCalc({ ...state, inputs: inputsForCalc }, {});
@@ -260,12 +266,21 @@ export function calculatorReducer(state: CalculatorState, action: CalculatorActi
       const newInputs = { ...oldInputs, vehicleYear: year };
       const rulesResult = calculateAutoLoan(newInputs);
 
+      // Rate still re-seeds from the year: the tool is an estimate keyed on year/price/down payment.
+      // Seeded from the Desjardins sheet's lowest reserve-backed rate at the restored term when one
+      // exists, falling back to the CARF guideline. The default quote snaps to the Desjardins-
+      // placeable term in ON while the slider keeps the full panel range.
+      const defaultMax = rulesResult.desjardinsMaxTerm > 0
+        ? Math.min(rulesResult.maxTermAllowed, rulesResult.desjardinsMaxTerm)
+        : rulesResult.maxTermAllowed;
+      const termMonths = termForYear(state, year, defaultMax);
+      const withNewTerm = calculateAutoLoan({ ...newInputs, termMonths });
+
       const finalInputs = {
         ...newInputs,
-        // Rate still re-seeds from the year: the tool is an estimate keyed on year/price/down payment.
-        apr: rulesResult.minApr,
+        apr: withNewTerm.availableAprs[0]?.apr ?? rulesResult.minApr,
         // Restore the term the user previously chose for this year; otherwise use the year's max.
-        termMonths: termForYear(state, year, rulesResult.maxTermAllowed),
+        termMonths,
         // Down payment is left as entered — the "Min Down Required" note communicates the new
         // requirement, and it is only raised on blur (COMMIT_DOWN_PAYMENT).
       };

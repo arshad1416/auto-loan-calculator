@@ -65,7 +65,15 @@ const LoanResults: React.FC<Props> = ({ inputs, results, reverseMode, targetBiWe
             <div className="metric-value">
               {inputs.termMonths} mo <span style={{ color: 'var(--text-secondary)', fontWeight: 400 }}>({Math.round(inputs.termMonths / 12)} yr)</span>
             </div>
-            <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>@ {inputs.apr}% Interest Rate</div>
+            <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>
+              @ {inputs.apr}% Interest Rate
+              {results.desjardinsReservePct != null && (
+                <> · Desjardins reserve {results.desjardinsReservePct}% (${fmt(Math.round(results.loanPrincipal * results.desjardinsReservePct / 100))})</>
+              )}
+              {results.desjardinsReservePct == null && (results.availableAprs?.length ?? 0) > 0 && (
+                <> · no reserve at this amount</>
+              )}
+            </div>
           </div>
           <div className="metric">
             <label>Condition</label>
@@ -91,7 +99,11 @@ const LoanResults: React.FC<Props> = ({ inputs, results, reverseMode, targetBiWe
           <div className="metric">
             <label>Max Term Allowed</label>
             <div className="metric-value">{results.maxTermAllowed} mo</div>
-            <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>Min APR: {results.minApr}%</div>
+            <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>
+              {(results.availableAprs?.length ?? 0) > 0
+                ? <>Lowest backed rate: {results.availableAprs[0].apr}%</>
+                : <>CARF guideline min: {results.minApr}%</>}
+            </div>
           </div>
         </div>
 
@@ -113,6 +125,13 @@ const LoanResults: React.FC<Props> = ({ inputs, results, reverseMode, targetBiWe
             {results.luxuryTax !== undefined && results.luxuryTax > 0 && (
               <div style={{ fontSize: '0.7rem', color: '#fbbf24', marginTop: '0.25rem', fontWeight: 600 }}>
                 ● Luxury Tax: ${fmt(results.luxuryTax)}
+              </div>
+            )}
+            {results.insuranceProducts > 0 && (
+              <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', marginTop: '0.15rem' }}>
+                {results.provinceCode === 'QC'
+                  ? <>Incl. 9% QST on insurance (${fmt(Math.round(results.insuranceTax))})</>
+                  : <>Insurance ${fmt(results.insuranceProducts)} — tax-exempt</>}
               </div>
             )}
           </div>

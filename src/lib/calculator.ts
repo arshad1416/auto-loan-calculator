@@ -4,6 +4,8 @@
  * Financing rules sourced from Canadian lender guidelines (June 2026).
  */
 
+import { availableDesjardinsRates, desjardinsReserveFor, desjardinsMaxTerm, type AvailableRate } from './desjardins';
+
 export interface AmortizationPeriod {
   period: number;
   payment: number;
@@ -32,6 +34,8 @@ export interface CalculationInput {
   warranty?: number;
   safetyCertification?: number;
   otherFees?: number;
+  /** Optional insurance products (GAP / Life / A&H) financed on the deal */
+  insuranceProducts?: number;
 }
 
 export interface CalculationResult {
@@ -63,6 +67,16 @@ export interface CalculationResult {
   warranty: number;
   safetyCertification: number;
   otherFees: number;
+  /** Insurance products financed on the deal (GAP / Life / A&H) */
+  insuranceProducts: number;
+  /** Tax on insurance premiums: 0 everywhere except QC (9% QST) */
+  insuranceTax: number;
+  /** Desjardins rates the sheet backs with a reserve at this amount/year/term */
+  availableAprs: AvailableRate[];
+  /** Reserve % for the chosen APR, or null when it has no reserve / is off-sheet */
+  desjardinsReservePct: number | null;
+  /** Desjardins sheet amortization cap for this year (0 = Desjardins not applicable) */
+  desjardinsMaxTerm: number;
 }
 
 const NEGATIVE_EQUITY_CAP = 0.40; // Max % of vehicle price that can be rolled in as negative equity
@@ -246,14 +260,17 @@ export function computeLumpSumAmortization(
 }
 
 export const calculateAutoLoan = (input: CalculationInput): CalculationResult => {
-  const { vehicleYear, vehiclePrice, tradeInValue, lienAmount, downPayment, apr, termMonths, licensingFee, provinceCode, vehicleCondition, lenderAdminFee, dealerAdminFee, ppsaFee, warranty, safetyCertification, otherFees } = input;
+  const { vehicleYear, vehiclePrice, tradeInValue, lienAmount, downPayment, apr, termMonths, licensingFee, provinceCode, vehicleCondition, lenderAdminFee, dealerAdminFee, ppsaFee, warranty, safetyCertification, otherFees, insuranceProducts } = input;
 
   const rules = getYearRules(vehicleYear, input.vehicleCondition);
+  const provCode = provinceCode || 'ON';
+  // Desjardins sheet amortization cap for this year (informational: the rate
+  // list empties past it; maxTermAllowed stays the panel-wide guideline).
+  const desjardinsCap = provCode === 'ON' ? desjardinsMaxTerm(vehicleYear) : 0;
   const maxTermAllowed = rules.maxTermAllowed;
   const minApr = rules.minApr;
   const isBankFinancable = rules.isBankFinancable;
 
-  const provCode = provinceCode || 'ON';
   const province = PROVINCES.find(p => p.code === provCode) || PROVINCES[0];
   const regulatingFee = province.regulatingFee;
 
@@ -265,6 +282,16 @@ export const calculateAutoLoan = (input: CalculationInput): CalculationResult =>
   const warrantyFee = warranty ?? 0;
   const safetyFee = safetyCertification ?? 0;
   const otherFeeAmount = otherFees ?? 0;
+
+  // Insurance products (GAP / Life / A&H) — per CRA and provincial rules:
+  // A contract of insurance is an EXEMPT supply under the Excise Tax Act
+  // (Schedule V), so no GST/HST applies federally. Provincial PST/RST does
+  // not apply to insurance premiums either — insurers remit insurance
+  // premium tax instead. OMVIC's all-in-price rules (ON) treat these as
+  // optional products outside the taxable vehicle price. Quebec is the
+  // exception: a specific 9% QST applies to insurance contracts.
+  const insuranceTotal = insuranceProducts ?? 0;
+  const insuranceTax = provCode === 'QC' ? insuranceTotal * 0.09 : 0;
 
   // Calculate Federal Luxury Tax: Lesser of 10% of total price or 20% of amount over $100,000
   // CRA: Applies to NEW vehicles only, based on the retail sale price (not admin or regulatory fees)
@@ -296,10 +323,16 @@ export const calculateAutoLoan = (input: CalculationInput): CalculationResult =>
   const gst = province.taxType === 'HST' ? 0 : taxableAmount * province.gstRate;
   const pst = province.taxType === 'HST' ? 0 : taxableAmount * pstRate;
   const hstAmount = province.taxType === 'HST' ? taxableAmount * province.pstRate : 0;
-  const totalTax = gst + pst + hstAmount;
+  const totalTax = gst + pst + hstAmount + insuranceTax;
 
-  // 4. Calculate Loan Principal
-  const loanPrincipal = Math.max(0, taxableAmount + totalTax + licensingFee + ppsa + financedLien - downPayment);
+  // 4. Calculate Loan Principal — the insurance premium is financed; in QC
+  // its 9% QST is already part of totalTax above
+  const loanPrincipal = Math.max(0, taxableAmount + totalTax + licensingFee + ppsa + financedLien - downPayment + insuranceTotal);
+
+  // 4b. Desjardins rate availability: the sheet's reserve grid gates which APRs
+  // are quotable — rates with no reserve at this amount/year/term are excluded.
+  const availableAprs = availableDesjardinsRates(loanPrincipal, vehicleYear, termMonths, provCode);
+  const desjardinsReservePct = desjardinsReserveFor(apr, loanPrincipal, vehicleYear, termMonths, provCode);
 
   // 5. Monthly Payment Formula
   const monthlyRate = apr / 100 / 12;
@@ -351,6 +384,11 @@ export const calculateAutoLoan = (input: CalculationInput): CalculationResult =>
     warranty: warrantyFee,
     safetyCertification: safetyFee,
     otherFees: otherFeeAmount,
+    insuranceProducts: insuranceTotal,
+    insuranceTax,
+    availableAprs,
+    desjardinsReservePct,
+    desjardinsMaxTerm: desjardinsCap,
   };
 };
 
@@ -372,10 +410,12 @@ export interface ReverseInput {
   warranty?: number;
   safetyCertification?: number;
   otherFees?: number;
+  /** Optional insurance products (GAP / Life / A&H) financed on the deal */
+  insuranceProducts?: number;
 }
 
 export const reverseCalculateAutoLoan = (input: ReverseInput): CalculationResult => {
-  const { targetBiWeeklyPayment, targetMonthlyPayment, vehicleYear, tradeInValue, lienAmount, downPayment, termMonths, licensingFee, provinceCode, vehicleCondition, lenderAdminFee, dealerAdminFee, ppsaFee, warranty, safetyCertification, otherFees } = input;
+  const { targetBiWeeklyPayment, targetMonthlyPayment, vehicleYear, tradeInValue, lienAmount, downPayment, termMonths, licensingFee, provinceCode, vehicleCondition, lenderAdminFee, dealerAdminFee, ppsaFee, warranty, safetyCertification, otherFees, insuranceProducts } = input;
   const monthlyTarget = targetMonthlyPayment > 0 ? targetMonthlyPayment : (targetBiWeeklyPayment * 26) / 12;
 
   const provCode = provinceCode || 'ON';
@@ -417,6 +457,7 @@ export const reverseCalculateAutoLoan = (input: ReverseInput): CalculationResult
         warranty,
         safetyCertification,
         otherFees,
+        insuranceProducts,
       });
     } catch {
       break;
@@ -457,6 +498,7 @@ export const reverseCalculateAutoLoan = (input: ReverseInput): CalculationResult
       warranty,
       safetyCertification,
       otherFees,
+      insuranceProducts,
     });
   } catch {
     forwardResult = calculateAutoLoan({

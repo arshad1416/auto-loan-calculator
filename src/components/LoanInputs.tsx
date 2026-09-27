@@ -1,5 +1,7 @@
+import { useEffect, useState } from 'react';
 import type { CalculationInput, CalculationResult, VehicleCondition } from '../lib/calculator';
 import { PROVINCES } from '../lib/calculator';
+import type { AvailableRate } from '../lib/desjardins';
 
 interface Props {
   inputs: CalculationInput;
@@ -20,9 +22,48 @@ interface Props {
 const CURRENT_YEAR = new Date().getFullYear();
 const YEAR_OPTIONS = Array.from({ length: CURRENT_YEAR - 1990 + 2 }, (_, i) => 1990 + i).reverse();
 
+// Snap points for the term slider: standard 12-month steps plus the
+// mid-tier terms (42/54/66/78). Filtered by the year's max allowed term.
+const TERM_STOPS = [12, 24, 36, 42, 48, 54, 60, 66, 72, 78, 84, 96];
+
+const termYearsLabel = (m: number) => (m % 12 === 0 ? `${m / 12} yr` : `${(m / 12).toFixed(1)} yr`);
+
+function nearestStopIndex(term: number, stops: number[]): number {
+  let best = 0;
+  for (let i = 1; i < stops.length; i++) {
+    if (Math.abs(stops[i] - term) < Math.abs(stops[best] - term)) best = i;
+  }
+  return best;
+}
+
 const fmt = (n: number) => n.toLocaleString();
 
 const parseFormatted = (raw: string): number => Math.min(parseFloat(raw.replace(/,/g, '')) || 0, 99_999_999);
+
+/**
+ * Money input that lets users type cents: the raw string is kept while
+ * typing so a trailing "199." or "199.50" survives the controlled-input
+ * round-trip (plain parse-and-reformat would eat the decimal point).
+ * Accepts digits, thousands commas, and up to two decimals.
+ */
+const MoneyInput: React.FC<{ name: string; value: number; onChange: (value: number) => void }> = ({ name, value, onChange }) => {
+  const [raw, setRaw] = useState<string>(value ? fmt(value) : '');
+
+  // Re-sync when the value changes externally (reset, programmatic updates)
+  useEffect(() => {
+    if ((value || 0) !== parseFormatted(raw)) setRaw(value ? fmt(value) : '');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [value]);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const v = e.target.value;
+    if (!/^[\d,]*\.?\d{0,2}$/.test(v)) return; // digits, commas, one '.', max 2 decimals
+    setRaw(v);
+    onChange(parseFormatted(v));
+  };
+
+  return <input type="text" inputMode="decimal" name={name} value={raw} onChange={handleChange} />;
+};
 
 const LoanInputs: React.FC<Props> = ({
   inputs, results, reverseMode,
@@ -35,6 +76,77 @@ const LoanInputs: React.FC<Props> = ({
   const isDownPaymentTooLow = inputs.downPayment < results.minDownPaymentRequired;
   // Red while the entry is short, and still red just after we raised it, so the change is noticed.
   const flagDownPayment = isDownPaymentTooLow || downPaymentRaised;
+
+  // Desjardins sheet: "Minimum term applicable of 24 months on any financing"
+  const minTermMonths = results.desjardinsMaxTerm > 0 ? 24 : 12;
+  const termStops = TERM_STOPS.filter((t) => t >= minTermMonths && t <= results.maxTermAllowed);
+  const termIndex = termStops.includes(inputs.termMonths)
+    ? termStops.indexOf(inputs.termMonths)
+    : nearestStopIndex(inputs.termMonths, termStops);
+
+  // Reserve-backed rate picker: the Desjardins sheet only pays reserve on some
+  // rate/amount combinations, so unbacked rates are not offered as choices.
+  const availableRates: AvailableRate[] = results.availableAprs ?? [];
+  const aprOnSheet = availableRates.some((r) => Math.abs(r.apr - inputs.apr) < 0.005);
+  const [customRateMode, setCustomRateMode] = useState(false);
+  const showRateList = availableRates.length > 0 && !customRateMode && aprOnSheet;
+  // The CARF guideline floor only applies where no lender rate sheet governs
+  // the deal; backed-list deals are governed by reserve availability instead.
+  const belowMarket = availableRates.length === 0 && inputs.apr < results.minApr && inputs.apr > 0;
+
+  const interestRateField = (
+    <div className="input-group">
+      <label>Interest Rate (%)</label>
+      {showRateList ? (
+        <select
+          name="apr"
+          value={String(inputs.apr)}
+          onChange={(e) => {
+            const v = e.target.value;
+            if (v === 'custom') { setCustomRateMode(true); return; }
+            setCustomRateMode(false);
+            onChange('apr', parseFloat(v));
+          }}
+        >
+          {availableRates.map((r) => (
+            <option key={r.apr} value={String(r.apr)}>
+              {r.apr}%{r.kind === 'promo' ? ' (promo)' : ''} — reserve {r.reservePct}%
+            </option>
+          ))}
+          <option value="custom">Custom rate…</option>
+        </select>
+      ) : (
+        <input
+          type="number"
+          name="apr"
+          value={inputs.apr}
+          onChange={(e) => onChange('apr', parseFloat(e.target.value) || 0)}
+          step="0.01"
+          style={{ borderColor: belowMarket ? '#f59e0b' : '' }}
+        />
+      )}
+      {showRateList && (
+        <div style={{ color: 'var(--text-secondary)', fontSize: '0.7rem', marginTop: '0.2rem' }}>
+          Rates with no Desjardins reserve at this amount are excluded. Use Custom rate… for other lenders.
+        </div>
+      )}
+      {!showRateList && availableRates.length > 0 && !aprOnSheet && (
+        <div style={{ color: 'var(--error-color)', fontSize: '0.7rem', marginTop: '0.2rem', fontWeight: 600 }}>
+          ⚠ {inputs.apr}% has no reserve at ${Math.round(results.loanPrincipal).toLocaleString()} financed — not available. Lowest backed rate: {availableRates[0].apr}%
+        </div>
+      )}
+      {belowMarket && (
+        <div style={{ color: '#fbbf24', fontSize: '0.7rem', marginTop: '0.2rem', fontWeight: 600 }}>
+          ⚠ Below CARF guideline rate — guideline min for {inputs.vehicleYear}: {results.minApr}%
+        </div>
+      )}
+      {!showRateList && !belowMarket && availableRates.length === 0 && (
+        <div style={{ color: 'var(--text-secondary)', fontSize: '0.7rem', marginTop: '0.2rem' }}>
+          CARF guideline min for {inputs.vehicleYear}: {results.minApr}%
+        </div>
+      )}
+    </div>
+  );
 
   return (
     <div className="glass-panel">
@@ -96,28 +208,7 @@ const LoanInputs: React.FC<Props> = ({
         {reverseMode ? (
           <>
             {/* Interest Rate (editable) */}
-            <div className="input-group">
-              <label>Interest Rate (%)</label>
-              <input
-                type="number"
-                name="apr"
-                value={inputs.apr}
-                onChange={(e) => onChange('apr', parseFloat(e.target.value) || 0)}
-                step="0.01"
-                style={{ borderColor: inputs.apr < results.minApr && inputs.apr > 0 ? '#f59e0b' : '' }}
-              />
-              <div style={{
-                color: inputs.apr < results.minApr && inputs.apr > 0 ? '#fbbf24' : 'var(--text-secondary)',
-                fontSize: '0.7rem',
-                marginTop: '0.2rem',
-                fontWeight: inputs.apr < results.minApr && inputs.apr > 0 ? 600 : 400,
-              }}>
-                {inputs.apr < results.minApr && inputs.apr > 0
-                  ? `⚠ Below market rate — min for ${inputs.vehicleYear}: ${results.minApr}%`
-                  : `Min for ${inputs.vehicleYear}: ${results.minApr}%`
-                }
-              </div>
-            </div>
+            {interestRateField}
 
             {/* Target Bi-Weekly Payment */}
             <div className="input-group">
@@ -143,18 +234,18 @@ const LoanInputs: React.FC<Props> = ({
 
             {/* Term (editable slider) */}
             <div className="input-group">
-              <label>Loan Term: {inputs.termMonths} mo ({Math.round(inputs.termMonths / 12)} yr)</label>
+              <label>Loan Term: {inputs.termMonths} mo ({termYearsLabel(inputs.termMonths)})</label>
               <input
                 type="range"
                 name="termMonths"
-                min={12}
-                max={results.maxTermAllowed}
-                step={12}
-                value={inputs.termMonths}
-                onChange={(e) => onChange('termMonths', parseInt(e.target.value) || 12)}
+                min={0}
+                max={termStops.length - 1}
+                step={1}
+                value={termIndex}
+                onChange={(e) => onChange('termMonths', termStops[parseInt(e.target.value)] ?? 12)}
               />
               <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '0.5rem', fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
-                <span>12 mo</span>
+                <span>{termStops[0]} mo</span>
                 <span>{results.maxTermAllowed} mo (max)</span>
               </div>
             </div>
@@ -175,28 +266,7 @@ const LoanInputs: React.FC<Props> = ({
             </div>
 
             {/* Interest Rate */}
-            <div className="input-group">
-              <label>Interest Rate (%)</label>
-              <input
-                type="number"
-                name="apr"
-                value={inputs.apr}
-                onChange={(e) => onChange('apr', parseFloat(e.target.value) || 0)}
-                step="0.01"
-                style={{ borderColor: inputs.apr < results.minApr && inputs.apr > 0 ? '#f59e0b' : '' }}
-              />
-              <div style={{
-                color: inputs.apr < results.minApr && inputs.apr > 0 ? '#fbbf24' : 'var(--text-secondary)',
-                fontSize: '0.7rem',
-                marginTop: '0.2rem',
-                fontWeight: inputs.apr < results.minApr && inputs.apr > 0 ? 600 : 400,
-              }}>
-                {inputs.apr < results.minApr && inputs.apr > 0
-                  ? `⚠ Below market rate — min for ${inputs.vehicleYear}: ${results.minApr}%`
-                  : `Min for ${inputs.vehicleYear}: ${results.minApr}%`
-                }
-              </div>
-            </div>
+            {interestRateField}
           </>
         )}
 
@@ -266,19 +336,19 @@ const LoanInputs: React.FC<Props> = ({
         {/* Forward mode: Term slider */}
         {!reverseMode && (
           <div className="input-group">
-            <label>Loan Term: {inputs.termMonths} mo ({Math.round(inputs.termMonths / 12)} yr)</label>
+            <label>Loan Term: {inputs.termMonths} mo ({termYearsLabel(inputs.termMonths)})</label>
             <input
               type="range"
               name="termMonths"
-              min={12}
-              max={results.maxTermAllowed}
-              step={12}
-              value={inputs.termMonths}
-              onChange={(e) => onChange('termMonths', parseInt(e.target.value) || 12)}
+              min={0}
+              max={termStops.length - 1}
+              step={1}
+              value={termIndex}
+              onChange={(e) => onChange('termMonths', termStops[parseInt(e.target.value)] ?? 12)}
             />
             <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '0.5rem', fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
-              <span>12 mo</span>
-              <span style={{ color: isTermTooLong ? 'var(--error-color)' : '' }}>{results.maxTermAllowed} mo ({Math.round(results.maxTermAllowed / 12)} yr)</span>
+              <span>{termStops[0]} mo</span>
+              <span style={{ color: isTermTooLong ? 'var(--error-color)' : '' }}>{results.maxTermAllowed} mo ({termYearsLabel(results.maxTermAllowed)})</span>
             </div>
             {isTermTooLong && (
               <div style={{ color: 'var(--error-color)', fontSize: '0.75rem', marginTop: '0.5rem' }}>
@@ -291,9 +361,12 @@ const LoanInputs: React.FC<Props> = ({
 
       {/* Additional Fees & Products */}
       <div style={{ marginTop: '2rem', paddingTop: '1.5rem', borderTop: '1px solid var(--panel-border)' }}>
-        <label style={{ marginBottom: '1rem', color: 'var(--text-primary)', fontSize: '0.9rem', fontWeight: 600 }}>
-          Additional Fees & Products (taxable except PPSA)
+        <label style={{ marginBottom: '0.35rem', color: 'var(--text-primary)', fontSize: '0.9rem', fontWeight: 600 }}>
+          Additional Fees & Products (taxable except PPSA & insurance)
         </label>
+        <div style={{ marginBottom: '1rem', color: 'var(--text-secondary)', fontSize: '0.7rem' }}>
+          Insurance premiums are CRA-exempt — only Quebec taxes them (9% QST).
+        </div>
         <div className="input-grid">
           <div className="input-group">
             <label>Lender Admin Fee ($)</label>
@@ -327,12 +400,7 @@ const LoanInputs: React.FC<Props> = ({
           </div>
           <div className="input-group">
             <label>Warranty ($)</label>
-            <input
-              type="text"
-              inputMode="numeric"
-              value={inputs.warranty ? fmt(inputs.warranty) : ''}
-              onChange={(e) => onChange('warranty', parseFormatted(e.target.value))}
-            />
+            <MoneyInput name="warranty" value={inputs.warranty ?? 0} onChange={(v) => onChange('warranty', v)} />
           </div>
           <div className="input-group">
             <label>Safety Certification ($)</label>
@@ -345,12 +413,16 @@ const LoanInputs: React.FC<Props> = ({
           </div>
           <div className="input-group">
             <label>Other Fees / Products ($)</label>
-            <input
-              type="text"
-              inputMode="numeric"
-              value={inputs.otherFees ? fmt(inputs.otherFees) : ''}
-              onChange={(e) => onChange('otherFees', parseFormatted(e.target.value))}
-            />
+            <MoneyInput name="otherFees" value={inputs.otherFees ?? 0} onChange={(v) => onChange('otherFees', v)} />
+          </div>
+          <div className="input-group">
+            <label>Insurance (GAP / Life / A&H) ($)</label>
+            <MoneyInput name="insuranceProducts" value={inputs.insuranceProducts ?? 0} onChange={(v) => onChange('insuranceProducts', v)} />
+            <div style={{ color: 'var(--text-secondary)', fontSize: '0.7rem', marginTop: '0.2rem' }}>
+              {(inputs.provinceCode || 'ON') === 'QC'
+                ? '9% QST applies to insurance premiums in Quebec'
+                : `Tax-exempt insurance premium in ${PROVINCES.find((p) => p.code === (inputs.provinceCode || 'ON'))?.name ?? 'this province'} — financed, not taxed`}
+            </div>
           </div>
         </div>
         <button
