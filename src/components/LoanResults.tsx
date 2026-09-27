@@ -65,15 +65,7 @@ const LoanResults: React.FC<Props> = ({ inputs, results, reverseMode, targetBiWe
             <div className="metric-value">
               {inputs.termMonths} mo <span style={{ color: 'var(--text-secondary)', fontWeight: 400 }}>({Math.round(inputs.termMonths / 12)} yr)</span>
             </div>
-            <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>
-              @ {inputs.apr}% Interest Rate
-              {results.desjardinsReservePct != null && (
-                <> · Desjardins reserve {results.desjardinsReservePct}% (${fmt(Math.round(results.loanPrincipal * results.desjardinsReservePct / 100))})</>
-              )}
-              {results.desjardinsReservePct == null && (results.availableAprs?.length ?? 0) > 0 && (
-                <> · no reserve at this amount</>
-              )}
-            </div>
+            <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>@ {inputs.apr}% Interest Rate</div>
           </div>
           <div className="metric">
             <label>Condition</label>
@@ -99,11 +91,7 @@ const LoanResults: React.FC<Props> = ({ inputs, results, reverseMode, targetBiWe
           <div className="metric">
             <label>Max Term Allowed</label>
             <div className="metric-value">{results.maxTermAllowed} mo</div>
-            <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>
-              {(results.availableAprs?.length ?? 0) > 0
-                ? <>Lowest backed rate: {results.availableAprs[0].apr}%</>
-                : <>CARF guideline min: {results.minApr}%</>}
-            </div>
+            <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>CARF guideline min: {results.minApr}%</div>
           </div>
         </div>
 
