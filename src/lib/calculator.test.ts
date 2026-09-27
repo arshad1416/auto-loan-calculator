@@ -566,13 +566,13 @@ describe('calculatorReducer', () => {
   it('remembers the term chosen for each year across year switches', () => {
     let s = withPrice(30000);
     s = calculatorReducer(s, { type: 'SET_YEAR', year: 2018 });
-    expect(s.inputs.termMonths).toBe(72); // no prior pick -> year max
+    expect(s.inputs.termMonths).toBe(48); // no prior pick -> Desjardins-placeable year max (ON)
 
     s = calculatorReducer(s, { type: 'SET_FIELD', field: 'termMonths', value: 48 });
     expect(s.inputs.termMonths).toBe(48);
 
     s = calculatorReducer(s, { type: 'SET_YEAR', year: 2023 });
-    expect(s.inputs.termMonths).toBe(96); // no pick for 2023 -> year max
+    expect(s.inputs.termMonths).toBe(84); // no pick for 2023 -> Desjardins-placeable year max
 
     s = calculatorReducer(s, { type: 'SET_YEAR', year: 2018 });
     expect(s.inputs.termMonths).toBe(48); // the 2018 pick is restored
@@ -608,5 +608,69 @@ describe('calculatorReducer', () => {
 
     s = calculatorReducer(s, { type: 'SET_FIELD', field: 'downPayment', value: 9000 });
     expect(s.downPaymentRaised).toBe(false); // flag clears once the user edits again
+  });
+});
+
+// ── Desjardins reserve-gated rate availability ─────────────────────
+
+describe('Desjardins reserve gating in calculateAutoLoan', () => {
+  it('exposes the sheet-backed rate list and cap for an ON deal', () => {
+    const r = calculateAutoLoan(baseInput); // 2024, ~$48k financed, 84mo
+    // every rate in the list carries reserve at this amount; promos lead
+    expect(r.availableAprs[0]).toMatchObject({ apr: 6.95, kind: 'promo' });
+    expect(r.availableAprs.map((x) => x.apr)).toContain(9.99);
+    expect(r.desjardinsMaxTerm).toBe(96);
+    // baseInput's 6.99% is not a sheet rate -> no reserve
+    expect(r.desjardinsReservePct).toBeNull();
+  });
+
+  it('empties the rate list past the Desjardins term cap while maxTermAllowed stays panel', () => {
+    // 2023 panel max is 96 (CIBC/TD prime placements) but the sheet caps 2023 at 84
+    const r = calculateAutoLoan({ ...baseInput, vehicleYear: 2023, termMonths: 96 });
+    expect(r.maxTermAllowed).toBe(96); // panel guideline untouched
+    expect(r.desjardinsMaxTerm).toBe(84);
+    expect(r.availableAprs).toEqual([]); // no Desjardins rate backs a 96mo 2023
+    expect(r.desjardinsMaxTerm > 0 && calculateAutoLoan({ ...baseInput, vehicleYear: 2023, termMonths: 84 }).availableAprs.length > 0).toBe(true);
+  });
+
+  it('shows a reserve for a sheet rate and null for an off-sheet rate', () => {
+    const promo = calculateAutoLoan({ ...baseInput, apr: 6.95 });
+    // ~$48k financed lands in the $40,000-$49,999 bracket: promo 6.95% reserve is 0.80%
+    expect(promo.desjardinsReservePct).toBe(0.8);
+  });
+});
+
+// ── Insurance products (GAP / Life / A&H) ──────────────────────────
+
+describe('insurance products tax treatment', () => {
+  it('ON: insurance products are financed but HST-exempt', () => {
+    const withIns = calculateAutoLoan({ ...baseInput, insuranceProducts: 1000 });
+    const without = calculateAutoLoan(baseInput);
+    expect(withIns.hst).toBeCloseTo(without.hst, 2); // no tax on the premium (CRA exempt supply)
+    expect(withIns.insuranceTax).toBe(0);
+    expect(withIns.loanPrincipal).toBeCloseTo(without.loanPrincipal + 1000, 2);
+  });
+
+  it('QC: 9% QST applies to insurance premiums and rides in the principal', () => {
+    const withIns = calculateAutoLoan({ ...baseInput, provinceCode: 'QC', insuranceProducts: 1000 });
+    const without = calculateAutoLoan({ ...baseInput, provinceCode: 'QC' });
+    expect(withIns.insuranceTax).toBeCloseTo(90, 2);
+    expect(withIns.hst - without.hst).toBeCloseTo(90, 2);
+    expect(withIns.loanPrincipal - without.loanPrincipal).toBeCloseTo(1090, 2);
+  });
+
+  it('insurance is excluded from the taxable base (unlike taxable products)', () => {
+    const base = calculateAutoLoan(baseInput);
+    const ins = calculateAutoLoan({ ...baseInput, insuranceProducts: 5000 });
+    const warr = calculateAutoLoan({ ...baseInput, warranty: 5000 });
+    expect(ins.hst - base.hst).toBe(0);
+    expect(warr.hst - base.hst).toBeCloseTo(650, 2); // $5,000 warranty adds 13% HST
+  });
+
+  it('reverse mode: financed insurance reduces the max vehicle price', () => {
+    const base = { targetBiWeeklyPayment: 0, targetMonthlyPayment: 500, vehicleYear: 2024, tradeInValue: 0, lienAmount: 0, downPayment: 5000, apr: 6.99, termMonths: 84, licensingFee: 56 };
+    const withIns = reverseCalculateAutoLoan({ ...base, insuranceProducts: 1000 });
+    const without = reverseCalculateAutoLoan(base);
+    expect(withIns.maxVehiclePrice).toBeLessThan(without.maxVehiclePrice);
   });
 });
