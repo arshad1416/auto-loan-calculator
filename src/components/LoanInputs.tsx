@@ -107,8 +107,8 @@ const LoanInputs: React.FC<Props> = ({
         fontWeight: belowMarket ? 600 : 400,
       }}>
         {belowMarket
-          ? `⚠ Below CARF guideline rate — guideline min for ${inputs.vehicleYear}: ${results.minApr}%`
-          : `CARF guideline min for ${inputs.vehicleYear}: ${results.minApr}%`}
+          ? `⚠ Below market rate — min for ${inputs.vehicleYear}: ${results.minApr}%`
+          : `Min for ${inputs.vehicleYear}: ${results.minApr}%`}
       </div>
     </div>
   );
