@@ -1,14 +1,11 @@
 {
-  "$schema": "node_modules/wrangler/config-schema.json",
   "name": "auto-loan-calculator",
   "compatibility_date": "2026-05-20",
-  "observability": {
-    "enabled": true
-  },
+  "compatibility_flags": ["nodejs_compat"],
   "assets": {
     "not_found_handling": "single-page-application"
   },
-  "compatibility_flags": [
-    "nodejs_compat"
-  ]
+  "observability": {
+    "enabled": true
+  }
 }
