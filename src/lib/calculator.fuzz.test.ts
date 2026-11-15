@@ -2,7 +2,7 @@
  * Property fuzz for the calculator and its reducer.
  *
  * Deals are drawn from a seeded generator, so a failure prints the seed and case
- * number and replays exactly. Raise the volume with FUZZ_RUNS=200000 npx vitest run.
+ * number and replays exactly. Raise the volume with VITE_FUZZ_RUNS=200000 npx vitest run.
  */
 import { describe, it, expect } from 'vitest';
 import {
@@ -20,8 +20,8 @@ import {
   type CalculatorState,
 } from './calculator-reducer';
 
-const RUNS = Number(process.env.FUZZ_RUNS) || 4000;
-const SEED = Number(process.env.FUZZ_SEED) || 0x5eed1e55;
+const RUNS = Number(import.meta.env.VITE_FUZZ_RUNS) || 4000;
+const SEED = Number(import.meta.env.VITE_FUZZ_SEED) || 0x5eed1e55;
 
 /** mulberry32: small, fast, and good enough to spread deals across the input space. */
 function rng(seed: number) {
@@ -104,7 +104,7 @@ function forEachCase<T>(make: (r: Rand) => T, body: (input: T, r: Rand) => void)
       body(input, r);
     } catch (error) {
       const reason = error instanceof Error ? error.message : String(error);
-      throw new Error(`fuzz case ${i} (FUZZ_SEED=${SEED}) failed: ${reason}\ninput: ${JSON.stringify(input)}`);
+      throw new Error(`fuzz case ${i} (VITE_FUZZ_SEED=${SEED}) failed: ${reason}\ninput: ${JSON.stringify(input)}`, { cause: error });
     }
   }
 }
@@ -274,7 +274,7 @@ describe('reducer fuzz', { timeout: LONG }, () => {
         expect(calculatorReducer(state, { type: 'RESET' })).toEqual(createInitialState(true));
       } catch (error) {
         const reason = error instanceof Error ? error.message : String(error);
-        throw new Error(`session ${s} (FUZZ_SEED=${SEED}) failed: ${reason}\nactions: ${JSON.stringify(trail)}`);
+        throw new Error(`session ${s} (VITE_FUZZ_SEED=${SEED}) failed: ${reason}\nactions: ${JSON.stringify(trail)}`, { cause: error });
       }
     }
   });
