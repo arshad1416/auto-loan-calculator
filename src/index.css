@@ -273,6 +273,12 @@ select {
     linear-gradient(#03070a 0%, #07201e 46%, #040a09 47.5%);
 }
 
+/* Without WebGL: a still of the same drive, rendered in Blender (tools/hero-poster). */
+.hero--flat::before {
+  background: #040a09 url('/hero-poster.jpg') 62% 55% / cover no-repeat;
+  background-image: image-set(url('/hero-poster.avif') type('image/avif'), url('/hero-poster.jpg') type('image/jpeg'));
+}
+
 .hero__scene {
   position: absolute;
   inset: 0;
@@ -1522,6 +1528,13 @@ select {
 @media (max-width: 720px) {
   .topbar ul li:not(:first-child) {
     display: none;
+  }
+
+  /* Poster: keep the gantry sign above the headline and fade the road out behind the copy. */
+  .hero--flat::before {
+    background-size: auto 60%;
+    background-position: 72% 0;
+    mask-image: linear-gradient(#000 42%, transparent 60%);
   }
 
   /* The road sits centred on narrow screens, so the copy needs a floor to stand on. */
