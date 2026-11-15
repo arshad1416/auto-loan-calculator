@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import ArrowBoard from './ArrowBoard';
 import DotMatrix from './DotMatrix';
 import { exampleDeal, EXAMPLE_PRICE, EXAMPLE_YEAR } from '../lib/example-deal';
 import type { NightDrive } from '../hero/nightDrive';
@@ -145,6 +146,8 @@ const Hero: React.FC<Props> = ({ livePayment, onLoadExample, onStartFromBudget }
           </a>
         </div>
       </div>
+
+      <ArrowBoard ready={sceneState !== 'loading'} />
     </header>
   );
 };

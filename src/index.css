@@ -255,7 +255,7 @@ select {
   position: relative;
   isolation: isolate;
   display: grid;
-  grid-template-rows: auto 1fr;
+  grid-template-rows: auto 1fr auto;
   min-height: 100vh;
   min-height: 100svh;
   overflow: hidden;
@@ -431,6 +431,61 @@ select {
 .hero__alt {
   font-weight: 600;
   text-underline-offset: 0.25em;
+}
+
+/* Scroll cue: a sequential arrow board (Rive), under the copy on narrow screens and in the
+   bottom-right corner, clear of it, on wide ones. Sized up front so loading shifts nothing. */
+.arrow-cue {
+  position: relative;
+  grid-row: 3;
+  justify-self: center;
+  width: 7.5rem;
+  aspect-ratio: 240 / 150;
+  margin-bottom: 1.25rem;
+  border-radius: 0.5rem;
+  opacity: calc(1 - var(--hero-scroll) * 2);
+  animation: fade 0.9s 3.2s both;
+}
+
+@media (min-width: 1100px) {
+  .arrow-cue {
+    position: absolute;
+    right: var(--gutter);
+    bottom: clamp(2rem, 6vh, 4.25rem);
+    margin: 0;
+  }
+}
+
+.arrow-cue:focus-visible {
+  outline: 2px solid var(--amber);
+  outline-offset: 4px;
+}
+
+.arrow-cue__board {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.arrow-cue__fallback {
+  display: none;
+}
+
+.arrow-cue--fallback .arrow-cue__board {
+  display: none;
+}
+
+.arrow-cue--fallback .arrow-cue__fallback {
+  display: block;
+  position: absolute;
+  inset: 0;
+  width: 1.5rem;
+  height: 1.5rem;
+  margin: auto;
+  border-right: 4px solid var(--amber);
+  border-bottom: 4px solid var(--amber);
+  transform: translateY(-25%) rotate(45deg);
 }
 
 @keyframes fade {
