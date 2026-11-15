@@ -1545,6 +1545,11 @@ select {
   max-width: 62rem;
 }
 
+.disclaimer p + strong,
+.disclaimer p + p {
+  margin-top: 1rem;
+}
+
 .footer {
   display: flex;
   flex-wrap: wrap;
