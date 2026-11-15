@@ -81,6 +81,9 @@ export interface CalculationResult {
   desjardinsMaxTerm: number;
 }
 
+/** Rounds a dollar amount to the nearest cent. */
+const toCents = (amount: number): number => Math.round(amount * 100) / 100;
+
 const NEGATIVE_EQUITY_CAP = 0.40; // Max % of vehicle price that can be rolled in as negative equity
 
 /**
@@ -390,7 +393,7 @@ export const calculateAutoLoan = (input: CalculationInput): CalculationResult =>
     isBankFinancable,
     financingTier: rules.financingTier,
     schedule,
-    maxVehiclePrice: Math.round(vehiclePrice),
+    maxVehiclePrice: toCents(vehiclePrice),
     financedNegativeEquity,
     excessNegativeEquity,
     provinceCode: provCode,
@@ -447,7 +450,8 @@ export const reverseCalculateAutoLoan = (input: ReverseInput): CalculationResult
   let high = 2000000; // Cap search space at $2,000,000
   let bestPrice = 0;
 
-  for (let i = 0; i < 30; i++) {
+  // 40 halvings of $2,000,000 land well inside a cent.
+  for (let i = 0; i < 40; i++) {
     const mid = (low + high) / 2;
     const netTradeEffect = lienAmount - tradeInValue;
     const negativeEquity = Math.max(0, netTradeEffect);
@@ -489,22 +493,23 @@ export const reverseCalculateAutoLoan = (input: ReverseInput): CalculationResult
     }
   }
 
-  const finalPrice = Math.round(bestPrice);
-  const netTradeEffect = lienAmount - tradeInValue;
-  const negativeEquity = Math.max(0, netTradeEffect);
-  const maxFinanceable = Math.round(finalPrice * NEGATIVE_EQUITY_CAP);
-  const excessNegativeEquity = Math.max(0, negativeEquity - maxFinanceable);
-  const netTradeEquity = Math.max(0, tradeInValue - lienAmount);
-  const minDownRequiredOverall = Math.max(0, Math.round(finalPrice * rules.minDownPaymentPct) - netTradeEquity, excessNegativeEquity);
-
-  let forwardResult: CalculationResult;
-  try {
-    forwardResult = calculateAutoLoan({
+  // Whole cents, rounded down so the payment never passes the target. The minimum down payment and
+  // the negative-equity cap are whole-dollar figures that step as the price moves, so the payment
+  // is re-checked at the chosen cent and walked down if a step pushed it over.
+  const quote = (vehiclePrice: number) => {
+    const maxFinanceable = Math.round(vehiclePrice * NEGATIVE_EQUITY_CAP);
+    const excess = Math.max(0, Math.max(0, lienAmount - tradeInValue) - maxFinanceable);
+    const minDown = Math.max(
+      0,
+      Math.round(vehiclePrice * rules.minDownPaymentPct) - Math.max(0, tradeInValue - lienAmount),
+      excess,
+    );
+    return calculateAutoLoan({
       vehicleYear,
-      vehiclePrice: finalPrice,
+      vehiclePrice,
       tradeInValue,
       lienAmount,
-      downPayment: Math.max(downPayment, minDownRequiredOverall),
+      downPayment: Math.max(downPayment, minDown),
       apr,
       termMonths: term,
       licensingFee,
@@ -518,20 +523,14 @@ export const reverseCalculateAutoLoan = (input: ReverseInput): CalculationResult
       otherFees,
       insuranceProducts,
     });
-  } catch {
-    forwardResult = calculateAutoLoan({
-      vehicleYear,
-      vehiclePrice: 0,
-      tradeInValue: 0,
-      lienAmount: 0,
-      downPayment: 0,
-      apr,
-      termMonths: term,
-      licensingFee,
-      provinceCode: provCode,
-      vehicleCondition,
-    });
+  };
+
+  let finalPrice = Math.floor(bestPrice * 100) / 100;
+  for (let step = 0; step < 200 && finalPrice > 0 && quote(finalPrice).monthlyPayment > monthlyTarget; step++) {
+    finalPrice = toCents(finalPrice - 0.01);
   }
+
+  const forwardResult = quote(finalPrice);
 
   return {
     ...forwardResult,

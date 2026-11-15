@@ -54,7 +54,7 @@ const AmortizationSchedule: React.FC<Props> = ({
           </p>
           {lumpSum && (
             <p className="schedule__saved" role="status">
-              {lumpSum.periodsSaved} payments saved · ${lumpSum.interestSaved.toLocaleString(undefined, { maximumFractionDigits: 0 })} less interest
+              {lumpSum.periodsSaved} payments saved · ${fmt(lumpSum.interestSaved)} less interest
             </p>
           )}
 

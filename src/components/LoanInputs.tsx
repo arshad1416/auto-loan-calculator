@@ -1,3 +1,4 @@
+import { tidy } from '../lib/money';
 import { useEffect, useState } from 'react';
 import type { CalculationInput, CalculationResult, VehicleCondition } from '../lib/calculator';
 import { PROVINCES } from '../lib/calculator';
@@ -35,7 +36,7 @@ function nearestStopIndex(term: number, stops: number[]): number {
   return best;
 }
 
-const fmt = (n: number) => n.toLocaleString();
+const fmt = tidy;
 
 const parseFormatted = (raw: string): number => Math.min(parseFloat(raw.replace(/,/g, '')) || 0, 99_999_999);
 
@@ -227,22 +228,10 @@ const LoanInputs: React.FC<Props> = ({
           {reverseMode ? (
             <>
               <Field label="Target bi-weekly ($)">
-                <input
-                  type="text"
-                  inputMode="numeric"
-                  name="targetBiWeekly"
-                  value={targetBiWeeklyPayment ? fmt(targetBiWeeklyPayment) : ''}
-                  onChange={(e) => onTargetBiWeeklyChange(parseFormatted(e.target.value))}
-                />
+                <MoneyInput name="targetBiWeekly" value={targetBiWeeklyPayment} onChange={onTargetBiWeeklyChange} />
               </Field>
               <Field label="Target monthly ($)">
-                <input
-                  type="text"
-                  inputMode="numeric"
-                  name="targetMonthly"
-                  value={targetMonthlyPayment ? fmt(targetMonthlyPayment) : ''}
-                  onChange={(e) => onTargetMonthlyChange(parseFormatted(e.target.value))}
-                />
+                <MoneyInput name="targetMonthly" value={targetMonthlyPayment} onChange={onTargetMonthlyChange} />
               </Field>
               {interestRateField}
             </>
@@ -263,8 +252,8 @@ const LoanInputs: React.FC<Props> = ({
             label="Down payment ($)"
             note={results.minDownPaymentRequired > 0
               ? downPaymentRaised
-                ? `Raised to the minimum for ${inputs.vehicleYear}: $${results.minDownPaymentRequired.toLocaleString()}`
-                : `Minimum required: $${results.minDownPaymentRequired.toLocaleString()}`
+                ? `Raised to the minimum for ${inputs.vehicleYear}: $${tidy(results.minDownPaymentRequired)}`
+                : `Minimum required: $${tidy(results.minDownPaymentRequired)}`
               : undefined}
             tone={flagDownPayment ? 'error' : undefined}
           >

@@ -181,16 +181,16 @@ describe('calculator fuzz', { timeout: LONG }, () => {
         const res = reverseCalculateAutoLoan({ ...deal, targetBiWeeklyPayment: biWeekly, targetMonthlyPayment: monthly });
         expectSaneNumbers(res, 'reverse');
         expect(res.maxVehiclePrice).toBeLessThanOrEqual(2_000_000);
-        expect(Number.isInteger(res.maxVehiclePrice)).toBe(true);
+        expect(Math.abs(res.maxVehiclePrice * 100 - Math.round(res.maxVehiclePrice * 100))).toBeLessThan(1e-6);
 
         const target = monthly > 0 ? monthly : (biWeekly * 26) / 12;
         const at = (price: number) =>
           reverseAsForward(deal, price, res).monthlyPayment;
 
-        // The answer is rounded to a whole dollar, and the minimum down payment and negative-equity
-        // cap are rounded to the dollar too, so the payment moves in small uneven steps near the limit.
-        if (res.maxVehiclePrice >= 5) {
-          expect(at(res.maxVehiclePrice - 5)).toBeLessThanOrEqual(target + 1e-6);
+        // The answer is exact to the cent and never over the budget.
+        if (res.maxVehiclePrice > 0) {
+          expect(res.monthlyPayment).toBeLessThanOrEqual(target + 1e-9);
+          expect(at(res.maxVehiclePrice)).toBeCloseTo(res.monthlyPayment, 6);
         }
         // "Nothing dearer fits" only holds while price adds to what is financed. When the trade-in is
         // worth more than the vehicle and its fees, the taxable amount is pinned at zero and a dearer
