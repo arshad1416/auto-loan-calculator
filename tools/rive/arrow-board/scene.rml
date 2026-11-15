@@ -1,0 +1,1061 @@
+<Rive version="1" kind="fragment">
+    <Artboard defaultStateMachineId="0:7" styleId="0:5" width="240" height="150" name="Arrow Board" id="0:2">
+        <LayoutComponentStyle name="Artboard Style" id="0:5"/>
+
+        <StateMachine name="Board" id="0:7">
+            <StateMachineBool name="calm" id="0:40"/>
+            <StateMachineBool name="hover" id="0:41"/>
+
+            <StateMachineListenerSingle targetId="0:10" listenerTypeValue="enter" name="Pointer in">
+                <ListenerBoolChange inputId="0:41" value="true"/>
+            </StateMachineListenerSingle>
+            <StateMachineListenerSingle targetId="0:10" listenerTypeValue="down" name="Press">
+                <ListenerBoolChange inputId="0:41" value="true"/>
+            </StateMachineListenerSingle>
+            <StateMachineListenerSingle targetId="0:10" listenerTypeValue="exit" name="Pointer out">
+                <ListenerBoolChange inputId="0:41" value="false"/>
+            </StateMachineListenerSingle>
+
+            <StateMachineLayer name="Lamps" id="0:8">
+                <AnyState x="160" y="-120"/>
+                <ExitState x="480" y="-120"/>
+                <EntryState x="0" y="0">
+                    <StateTransition stateToId="0:70"/>
+                </EntryState>
+                <AnimationState x="160" y="0" animationId="0:60" reset="true" id="0:70">
+                <StateTransition stateToId="0:72" duration="0">
+                    <TransitionBoolCondition inputId="0:40" opValue="equal"/>
+                </StateTransition>
+                <StateTransition stateToId="0:71" duration="0">
+                    <TransitionBoolCondition inputId="0:41" opValue="equal"/>
+                </StateTransition>
+                </AnimationState>
+                <AnimationState x="320" y="0" animationId="0:61" id="0:71">
+                <StateTransition stateToId="0:72" duration="0">
+                    <TransitionBoolCondition inputId="0:41" opValue="notEqual"/>
+                    <TransitionBoolCondition inputId="0:40" opValue="equal"/>
+                </StateTransition>
+                <StateTransition stateToId="0:70" duration="0">
+                    <TransitionBoolCondition inputId="0:41" opValue="notEqual"/>
+                    <TransitionBoolCondition inputId="0:40" opValue="notEqual"/>
+                </StateTransition>
+                </AnimationState>
+                <AnimationState x="240" y="120" animationId="0:62" id="0:72">
+                <StateTransition stateToId="0:71" duration="0">
+                    <TransitionBoolCondition inputId="0:41" opValue="equal"/>
+                </StateTransition>
+                <StateTransition stateToId="0:70" duration="0">
+                    <TransitionBoolCondition inputId="0:40" opValue="notEqual"/>
+                    <TransitionBoolCondition inputId="0:41" opValue="notEqual"/>
+                </StateTransition>
+                </AnimationState>
+            </StateMachineLayer>
+        </StateMachine>
+
+        <Node opacity="0" name="Chevron 1" id="0:21">
+            <Shape x="42" y="24" name="On">
+                <Ellipse width="7.6" height="7.6" name="Path"/>
+                <Fill fillRule="clockwise" name="Glow">
+                    <SolidColor colorValue="B3FF9408" name="Color"/>
+                    <Feather strength="6" name="Feather"/>
+                </Fill>
+                <Fill name="Lens">
+                    <RadialGradient startX="-0.8" startY="-0.8" endX="4.4" endY="-0.8" name="Gradient">
+                        <GradientStop colorValue="FFFFF3C9" position="0"/>
+                        <GradientStop colorValue="FFFFB51E" position="0.5"/>
+                        <GradientStop colorValue="FFE27400" position="1"/>
+                    </RadialGradient>
+                </Fill>
+            </Shape>
+            <Shape x="51.75" y="27.25" name="On">
+                <Ellipse width="7.6" height="7.6" name="Path"/>
+                <Fill fillRule="clockwise" name="Glow">
+                    <SolidColor colorValue="B3FF9408" name="Color"/>
+                    <Feather strength="6" name="Feather"/>
+                </Fill>
+                <Fill name="Lens">
+                    <RadialGradient startX="-0.8" startY="-0.8" endX="4.4" endY="-0.8" name="Gradient">
+                        <GradientStop colorValue="FFFFF3C9" position="0"/>
+                        <GradientStop colorValue="FFFFB51E" position="0.5"/>
+                        <GradientStop colorValue="FFE27400" position="1"/>
+                    </RadialGradient>
+                </Fill>
+            </Shape>
+            <Shape x="61.5" y="30.5" name="On">
+                <Ellipse width="7.6" height="7.6" name="Path"/>
+                <Fill fillRule="clockwise" name="Glow">
+                    <SolidColor colorValue="B3FF9408" name="Color"/>
+                    <Feather strength="6" name="Feather"/>
+                </Fill>
+                <Fill name="Lens">
+                    <RadialGradient startX="-0.8" startY="-0.8" endX="4.4" endY="-0.8" name="Gradient">
+                        <GradientStop colorValue="FFFFF3C9" position="0"/>
+                        <GradientStop colorValue="FFFFB51E" position="0.5"/>
+                        <GradientStop colorValue="FFE27400" position="1"/>
+                    </RadialGradient>
+                </Fill>
+            </Shape>
+            <Shape x="71.25" y="33.75" name="On">
+                <Ellipse width="7.6" height="7.6" name="Path"/>
+                <Fill fillRule="clockwise" name="Glow">
+                    <SolidColor colorValue="B3FF9408" name="Color"/>
+                    <Feather strength="6" name="Feather"/>
+                </Fill>
+                <Fill name="Lens">
+                    <RadialGradient startX="-0.8" startY="-0.8" endX="4.4" endY="-0.8" name="Gradient">
+                        <GradientStop colorValue="FFFFF3C9" position="0"/>
+                        <GradientStop colorValue="FFFFB51E" position="0.5"/>
+                        <GradientStop colorValue="FFE27400" position="1"/>
+                    </RadialGradient>
+                </Fill>
+            </Shape>
+            <Shape x="81" y="37" name="On">
+                <Ellipse width="7.6" height="7.6" name="Path"/>
+                <Fill fillRule="clockwise" name="Glow">
+                    <SolidColor colorValue="B3FF9408" name="Color"/>
+                    <Feather strength="6" name="Feather"/>
+                </Fill>
+                <Fill name="Lens">
+                    <RadialGradient startX="-0.8" startY="-0.8" endX="4.4" endY="-0.8" name="Gradient">
+                        <GradientStop colorValue="FFFFF3C9" position="0"/>
+                        <GradientStop colorValue="FFFFB51E" position="0.5"/>
+                        <GradientStop colorValue="FFE27400" position="1"/>
+                    </RadialGradient>
+                </Fill>
+            </Shape>
+            <Shape x="90.75" y="40.25" name="On">
+                <Ellipse width="7.6" height="7.6" name="Path"/>
+                <Fill fillRule="clockwise" name="Glow">
+                    <SolidColor colorValue="B3FF9408" name="Color"/>
+                    <Feather strength="6" name="Feather"/>
+                </Fill>
+                <Fill name="Lens">
+                    <RadialGradient startX="-0.8" startY="-0.8" endX="4.4" endY="-0.8" name="Gradient">
+                        <GradientStop colorValue="FFFFF3C9" position="0"/>
+                        <GradientStop colorValue="FFFFB51E" position="0.5"/>
+                        <GradientStop colorValue="FFE27400" position="1"/>
+                    </RadialGradient>
+                </Fill>
+            </Shape>
+            <Shape x="100.5" y="43.5" name="On">
+                <Ellipse width="7.6" height="7.6" name="Path"/>
+                <Fill fillRule="clockwise" name="Glow">
+                    <SolidColor colorValue="B3FF9408" name="Color"/>
+                    <Feather strength="6" name="Feather"/>
+                </Fill>
+                <Fill name="Lens">
+                    <RadialGradient startX="-0.8" startY="-0.8" endX="4.4" endY="-0.8" name="Gradient">
+                        <GradientStop colorValue="FFFFF3C9" position="0"/>
+                        <GradientStop colorValue="FFFFB51E" position="0.5"/>
+                        <GradientStop colorValue="FFE27400" position="1"/>
+                    </RadialGradient>
+                </Fill>
+            </Shape>
+            <Shape x="110.25" y="46.75" name="On">
+                <Ellipse width="7.6" height="7.6" name="Path"/>
+                <Fill fillRule="clockwise" name="Glow">
+                    <SolidColor colorValue="B3FF9408" name="Color"/>
+                    <Feather strength="6" name="Feather"/>
+                </Fill>
+                <Fill name="Lens">
+                    <RadialGradient startX="-0.8" startY="-0.8" endX="4.4" endY="-0.8" name="Gradient">
+                        <GradientStop colorValue="FFFFF3C9" position="0"/>
+                        <GradientStop colorValue="FFFFB51E" position="0.5"/>
+                        <GradientStop colorValue="FFE27400" position="1"/>
+                    </RadialGradient>
+                </Fill>
+            </Shape>
+            <Shape x="120" y="50" name="On">
+                <Ellipse width="7.6" height="7.6" name="Path"/>
+                <Fill fillRule="clockwise" name="Glow">
+                    <SolidColor colorValue="B3FF9408" name="Color"/>
+                    <Feather strength="6" name="Feather"/>
+                </Fill>
+                <Fill name="Lens">
+                    <RadialGradient startX="-0.8" startY="-0.8" endX="4.4" endY="-0.8" name="Gradient">
+                        <GradientStop colorValue="FFFFF3C9" position="0"/>
+                        <GradientStop colorValue="FFFFB51E" position="0.5"/>
+                        <GradientStop colorValue="FFE27400" position="1"/>
+                    </RadialGradient>
+                </Fill>
+            </Shape>
+            <Shape x="129.75" y="46.75" name="On">
+                <Ellipse width="7.6" height="7.6" name="Path"/>
+                <Fill fillRule="clockwise" name="Glow">
+                    <SolidColor colorValue="B3FF9408" name="Color"/>
+                    <Feather strength="6" name="Feather"/>
+                </Fill>
+                <Fill name="Lens">
+                    <RadialGradient startX="-0.8" startY="-0.8" endX="4.4" endY="-0.8" name="Gradient">
+                        <GradientStop colorValue="FFFFF3C9" position="0"/>
+                        <GradientStop colorValue="FFFFB51E" position="0.5"/>
+                        <GradientStop colorValue="FFE27400" position="1"/>
+                    </RadialGradient>
+                </Fill>
+            </Shape>
+            <Shape x="139.5" y="43.5" name="On">
+                <Ellipse width="7.6" height="7.6" name="Path"/>
+                <Fill fillRule="clockwise" name="Glow">
+                    <SolidColor colorValue="B3FF9408" name="Color"/>
+                    <Feather strength="6" name="Feather"/>
+                </Fill>
+                <Fill name="Lens">
+                    <RadialGradient startX="-0.8" startY="-0.8" endX="4.4" endY="-0.8" name="Gradient">
+                        <GradientStop colorValue="FFFFF3C9" position="0"/>
+                        <GradientStop colorValue="FFFFB51E" position="0.5"/>
+                        <GradientStop colorValue="FFE27400" position="1"/>
+                    </RadialGradient>
+                </Fill>
+            </Shape>
+            <Shape x="149.25" y="40.25" name="On">
+                <Ellipse width="7.6" height="7.6" name="Path"/>
+                <Fill fillRule="clockwise" name="Glow">
+                    <SolidColor colorValue="B3FF9408" name="Color"/>
+                    <Feather strength="6" name="Feather"/>
+                </Fill>
+                <Fill name="Lens">
+                    <RadialGradient startX="-0.8" startY="-0.8" endX="4.4" endY="-0.8" name="Gradient">
+                        <GradientStop colorValue="FFFFF3C9" position="0"/>
+                        <GradientStop colorValue="FFFFB51E" position="0.5"/>
+                        <GradientStop colorValue="FFE27400" position="1"/>
+                    </RadialGradient>
+                </Fill>
+            </Shape>
+            <Shape x="159" y="37" name="On">
+                <Ellipse width="7.6" height="7.6" name="Path"/>
+                <Fill fillRule="clockwise" name="Glow">
+                    <SolidColor colorValue="B3FF9408" name="Color"/>
+                    <Feather strength="6" name="Feather"/>
+                </Fill>
+                <Fill name="Lens">
+                    <RadialGradient startX="-0.8" startY="-0.8" endX="4.4" endY="-0.8" name="Gradient">
+                        <GradientStop colorValue="FFFFF3C9" position="0"/>
+                        <GradientStop colorValue="FFFFB51E" position="0.5"/>
+                        <GradientStop colorValue="FFE27400" position="1"/>
+                    </RadialGradient>
+                </Fill>
+            </Shape>
+            <Shape x="168.75" y="33.75" name="On">
+                <Ellipse width="7.6" height="7.6" name="Path"/>
+                <Fill fillRule="clockwise" name="Glow">
+                    <SolidColor colorValue="B3FF9408" name="Color"/>
+                    <Feather strength="6" name="Feather"/>
+                </Fill>
+                <Fill name="Lens">
+                    <RadialGradient startX="-0.8" startY="-0.8" endX="4.4" endY="-0.8" name="Gradient">
+                        <GradientStop colorValue="FFFFF3C9" position="0"/>
+                        <GradientStop colorValue="FFFFB51E" position="0.5"/>
+                        <GradientStop colorValue="FFE27400" position="1"/>
+                    </RadialGradient>
+                </Fill>
+            </Shape>
+            <Shape x="178.5" y="30.5" name="On">
+                <Ellipse width="7.6" height="7.6" name="Path"/>
+                <Fill fillRule="clockwise" name="Glow">
+                    <SolidColor colorValue="B3FF9408" name="Color"/>
+                    <Feather strength="6" name="Feather"/>
+                </Fill>
+                <Fill name="Lens">
+                    <RadialGradient startX="-0.8" startY="-0.8" endX="4.4" endY="-0.8" name="Gradient">
+                        <GradientStop colorValue="FFFFF3C9" position="0"/>
+                        <GradientStop colorValue="FFFFB51E" position="0.5"/>
+                        <GradientStop colorValue="FFE27400" position="1"/>
+                    </RadialGradient>
+                </Fill>
+            </Shape>
+            <Shape x="188.25" y="27.25" name="On">
+                <Ellipse width="7.6" height="7.6" name="Path"/>
+                <Fill fillRule="clockwise" name="Glow">
+                    <SolidColor colorValue="B3FF9408" name="Color"/>
+                    <Feather strength="6" name="Feather"/>
+                </Fill>
+                <Fill name="Lens">
+                    <RadialGradient startX="-0.8" startY="-0.8" endX="4.4" endY="-0.8" name="Gradient">
+                        <GradientStop colorValue="FFFFF3C9" position="0"/>
+                        <GradientStop colorValue="FFFFB51E" position="0.5"/>
+                        <GradientStop colorValue="FFE27400" position="1"/>
+                    </RadialGradient>
+                </Fill>
+            </Shape>
+            <Shape x="198" y="24" name="On">
+                <Ellipse width="7.6" height="7.6" name="Path"/>
+                <Fill fillRule="clockwise" name="Glow">
+                    <SolidColor colorValue="B3FF9408" name="Color"/>
+                    <Feather strength="6" name="Feather"/>
+                </Fill>
+                <Fill name="Lens">
+                    <RadialGradient startX="-0.8" startY="-0.8" endX="4.4" endY="-0.8" name="Gradient">
+                        <GradientStop colorValue="FFFFF3C9" position="0"/>
+                        <GradientStop colorValue="FFFFB51E" position="0.5"/>
+                        <GradientStop colorValue="FFE27400" position="1"/>
+                    </RadialGradient>
+                </Fill>
+            </Shape>
+        </Node>
+        <Node opacity="0" name="Chevron 2" id="0:22">
+            <Shape x="42" y="54" name="On">
+                <Ellipse width="7.6" height="7.6" name="Path"/>
+                <Fill fillRule="clockwise" name="Glow">
+                    <SolidColor colorValue="B3FF9408" name="Color"/>
+                    <Feather strength="6" name="Feather"/>
+                </Fill>
+                <Fill name="Lens">
+                    <RadialGradient startX="-0.8" startY="-0.8" endX="4.4" endY="-0.8" name="Gradient">
+                        <GradientStop colorValue="FFFFF3C9" position="0"/>
+                        <GradientStop colorValue="FFFFB51E" position="0.5"/>
+                        <GradientStop colorValue="FFE27400" position="1"/>
+                    </RadialGradient>
+                </Fill>
+            </Shape>
+            <Shape x="51.75" y="57.25" name="On">
+                <Ellipse width="7.6" height="7.6" name="Path"/>
+                <Fill fillRule="clockwise" name="Glow">
+                    <SolidColor colorValue="B3FF9408" name="Color"/>
+                    <Feather strength="6" name="Feather"/>
+                </Fill>
+                <Fill name="Lens">
+                    <RadialGradient startX="-0.8" startY="-0.8" endX="4.4" endY="-0.8" name="Gradient">
+                        <GradientStop colorValue="FFFFF3C9" position="0"/>
+                        <GradientStop colorValue="FFFFB51E" position="0.5"/>
+                        <GradientStop colorValue="FFE27400" position="1"/>
+                    </RadialGradient>
+                </Fill>
+            </Shape>
+            <Shape x="61.5" y="60.5" name="On">
+                <Ellipse width="7.6" height="7.6" name="Path"/>
+                <Fill fillRule="clockwise" name="Glow">
+                    <SolidColor colorValue="B3FF9408" name="Color"/>
+                    <Feather strength="6" name="Feather"/>
+                </Fill>
+                <Fill name="Lens">
+                    <RadialGradient startX="-0.8" startY="-0.8" endX="4.4" endY="-0.8" name="Gradient">
+                        <GradientStop colorValue="FFFFF3C9" position="0"/>
+                        <GradientStop colorValue="FFFFB51E" position="0.5"/>
+                        <GradientStop colorValue="FFE27400" position="1"/>
+                    </RadialGradient>
+                </Fill>
+            </Shape>
+            <Shape x="71.25" y="63.75" name="On">
+                <Ellipse width="7.6" height="7.6" name="Path"/>
+                <Fill fillRule="clockwise" name="Glow">
+                    <SolidColor colorValue="B3FF9408" name="Color"/>
+                    <Feather strength="6" name="Feather"/>
+                </Fill>
+                <Fill name="Lens">
+                    <RadialGradient startX="-0.8" startY="-0.8" endX="4.4" endY="-0.8" name="Gradient">
+                        <GradientStop colorValue="FFFFF3C9" position="0"/>
+                        <GradientStop colorValue="FFFFB51E" position="0.5"/>
+                        <GradientStop colorValue="FFE27400" position="1"/>
+                    </RadialGradient>
+                </Fill>
+            </Shape>
+            <Shape x="81" y="67" name="On">
+                <Ellipse width="7.6" height="7.6" name="Path"/>
+                <Fill fillRule="clockwise" name="Glow">
+                    <SolidColor colorValue="B3FF9408" name="Color"/>
+                    <Feather strength="6" name="Feather"/>
+                </Fill>
+                <Fill name="Lens">
+                    <RadialGradient startX="-0.8" startY="-0.8" endX="4.4" endY="-0.8" name="Gradient">
+                        <GradientStop colorValue="FFFFF3C9" position="0"/>
+                        <GradientStop colorValue="FFFFB51E" position="0.5"/>
+                        <GradientStop colorValue="FFE27400" position="1"/>
+                    </RadialGradient>
+                </Fill>
+            </Shape>
+            <Shape x="90.75" y="70.25" name="On">
+                <Ellipse width="7.6" height="7.6" name="Path"/>
+                <Fill fillRule="clockwise" name="Glow">
+                    <SolidColor colorValue="B3FF9408" name="Color"/>
+                    <Feather strength="6" name="Feather"/>
+                </Fill>
+                <Fill name="Lens">
+                    <RadialGradient startX="-0.8" startY="-0.8" endX="4.4" endY="-0.8" name="Gradient">
+                        <GradientStop colorValue="FFFFF3C9" position="0"/>
+                        <GradientStop colorValue="FFFFB51E" position="0.5"/>
+                        <GradientStop colorValue="FFE27400" position="1"/>
+                    </RadialGradient>
+                </Fill>
+            </Shape>
+            <Shape x="100.5" y="73.5" name="On">
+                <Ellipse width="7.6" height="7.6" name="Path"/>
+                <Fill fillRule="clockwise" name="Glow">
+                    <SolidColor colorValue="B3FF9408" name="Color"/>
+                    <Feather strength="6" name="Feather"/>
+                </Fill>
+                <Fill name="Lens">
+                    <RadialGradient startX="-0.8" startY="-0.8" endX="4.4" endY="-0.8" name="Gradient">
+                        <GradientStop colorValue="FFFFF3C9" position="0"/>
+                        <GradientStop colorValue="FFFFB51E" position="0.5"/>
+                        <GradientStop colorValue="FFE27400" position="1"/>
+                    </RadialGradient>
+                </Fill>
+            </Shape>
+            <Shape x="110.25" y="76.75" name="On">
+                <Ellipse width="7.6" height="7.6" name="Path"/>
+                <Fill fillRule="clockwise" name="Glow">
+                    <SolidColor colorValue="B3FF9408" name="Color"/>
+                    <Feather strength="6" name="Feather"/>
+                </Fill>
+                <Fill name="Lens">
+                    <RadialGradient startX="-0.8" startY="-0.8" endX="4.4" endY="-0.8" name="Gradient">
+                        <GradientStop colorValue="FFFFF3C9" position="0"/>
+                        <GradientStop colorValue="FFFFB51E" position="0.5"/>
+                        <GradientStop colorValue="FFE27400" position="1"/>
+                    </RadialGradient>
+                </Fill>
+            </Shape>
+            <Shape x="120" y="80" name="On">
+                <Ellipse width="7.6" height="7.6" name="Path"/>
+                <Fill fillRule="clockwise" name="Glow">
+                    <SolidColor colorValue="B3FF9408" name="Color"/>
+                    <Feather strength="6" name="Feather"/>
+                </Fill>
+                <Fill name="Lens">
+                    <RadialGradient startX="-0.8" startY="-0.8" endX="4.4" endY="-0.8" name="Gradient">
+                        <GradientStop colorValue="FFFFF3C9" position="0"/>
+                        <GradientStop colorValue="FFFFB51E" position="0.5"/>
+                        <GradientStop colorValue="FFE27400" position="1"/>
+                    </RadialGradient>
+                </Fill>
+            </Shape>
+            <Shape x="129.75" y="76.75" name="On">
+                <Ellipse width="7.6" height="7.6" name="Path"/>
+                <Fill fillRule="clockwise" name="Glow">
+                    <SolidColor colorValue="B3FF9408" name="Color"/>
+                    <Feather strength="6" name="Feather"/>
+                </Fill>
+                <Fill name="Lens">
+                    <RadialGradient startX="-0.8" startY="-0.8" endX="4.4" endY="-0.8" name="Gradient">
+                        <GradientStop colorValue="FFFFF3C9" position="0"/>
+                        <GradientStop colorValue="FFFFB51E" position="0.5"/>
+                        <GradientStop colorValue="FFE27400" position="1"/>
+                    </RadialGradient>
+                </Fill>
+            </Shape>
+            <Shape x="139.5" y="73.5" name="On">
+                <Ellipse width="7.6" height="7.6" name="Path"/>
+                <Fill fillRule="clockwise" name="Glow">
+                    <SolidColor colorValue="B3FF9408" name="Color"/>
+                    <Feather strength="6" name="Feather"/>
+                </Fill>
+                <Fill name="Lens">
+                    <RadialGradient startX="-0.8" startY="-0.8" endX="4.4" endY="-0.8" name="Gradient">
+                        <GradientStop colorValue="FFFFF3C9" position="0"/>
+                        <GradientStop colorValue="FFFFB51E" position="0.5"/>
+                        <GradientStop colorValue="FFE27400" position="1"/>
+                    </RadialGradient>
+                </Fill>
+            </Shape>
+            <Shape x="149.25" y="70.25" name="On">
+                <Ellipse width="7.6" height="7.6" name="Path"/>
+                <Fill fillRule="clockwise" name="Glow">
+                    <SolidColor colorValue="B3FF9408" name="Color"/>
+                    <Feather strength="6" name="Feather"/>
+                </Fill>
+                <Fill name="Lens">
+                    <RadialGradient startX="-0.8" startY="-0.8" endX="4.4" endY="-0.8" name="Gradient">
+                        <GradientStop colorValue="FFFFF3C9" position="0"/>
+                        <GradientStop colorValue="FFFFB51E" position="0.5"/>
+                        <GradientStop colorValue="FFE27400" position="1"/>
+                    </RadialGradient>
+                </Fill>
+            </Shape>
+            <Shape x="159" y="67" name="On">
+                <Ellipse width="7.6" height="7.6" name="Path"/>
+                <Fill fillRule="clockwise" name="Glow">
+                    <SolidColor colorValue="B3FF9408" name="Color"/>
+                    <Feather strength="6" name="Feather"/>
+                </Fill>
+                <Fill name="Lens">
+                    <RadialGradient startX="-0.8" startY="-0.8" endX="4.4" endY="-0.8" name="Gradient">
+                        <GradientStop colorValue="FFFFF3C9" position="0"/>
+                        <GradientStop colorValue="FFFFB51E" position="0.5"/>
+                        <GradientStop colorValue="FFE27400" position="1"/>
+                    </RadialGradient>
+                </Fill>
+            </Shape>
+            <Shape x="168.75" y="63.75" name="On">
+                <Ellipse width="7.6" height="7.6" name="Path"/>
+                <Fill fillRule="clockwise" name="Glow">
+                    <SolidColor colorValue="B3FF9408" name="Color"/>
+                    <Feather strength="6" name="Feather"/>
+                </Fill>
+                <Fill name="Lens">
+                    <RadialGradient startX="-0.8" startY="-0.8" endX="4.4" endY="-0.8" name="Gradient">
+                        <GradientStop colorValue="FFFFF3C9" position="0"/>
+                        <GradientStop colorValue="FFFFB51E" position="0.5"/>
+                        <GradientStop colorValue="FFE27400" position="1"/>
+                    </RadialGradient>
+                </Fill>
+            </Shape>
+            <Shape x="178.5" y="60.5" name="On">
+                <Ellipse width="7.6" height="7.6" name="Path"/>
+                <Fill fillRule="clockwise" name="Glow">
+                    <SolidColor colorValue="B3FF9408" name="Color"/>
+                    <Feather strength="6" name="Feather"/>
+                </Fill>
+                <Fill name="Lens">
+                    <RadialGradient startX="-0.8" startY="-0.8" endX="4.4" endY="-0.8" name="Gradient">
+                        <GradientStop colorValue="FFFFF3C9" position="0"/>
+                        <GradientStop colorValue="FFFFB51E" position="0.5"/>
+                        <GradientStop colorValue="FFE27400" position="1"/>
+                    </RadialGradient>
+                </Fill>
+            </Shape>
+            <Shape x="188.25" y="57.25" name="On">
+                <Ellipse width="7.6" height="7.6" name="Path"/>
+                <Fill fillRule="clockwise" name="Glow">
+                    <SolidColor colorValue="B3FF9408" name="Color"/>
+                    <Feather strength="6" name="Feather"/>
+                </Fill>
+                <Fill name="Lens">
+                    <RadialGradient startX="-0.8" startY="-0.8" endX="4.4" endY="-0.8" name="Gradient">
+                        <GradientStop colorValue="FFFFF3C9" position="0"/>
+                        <GradientStop colorValue="FFFFB51E" position="0.5"/>
+                        <GradientStop colorValue="FFE27400" position="1"/>
+                    </RadialGradient>
+                </Fill>
+            </Shape>
+            <Shape x="198" y="54" name="On">
+                <Ellipse width="7.6" height="7.6" name="Path"/>
+                <Fill fillRule="clockwise" name="Glow">
+                    <SolidColor colorValue="B3FF9408" name="Color"/>
+                    <Feather strength="6" name="Feather"/>
+                </Fill>
+                <Fill name="Lens">
+                    <RadialGradient startX="-0.8" startY="-0.8" endX="4.4" endY="-0.8" name="Gradient">
+                        <GradientStop colorValue="FFFFF3C9" position="0"/>
+                        <GradientStop colorValue="FFFFB51E" position="0.5"/>
+                        <GradientStop colorValue="FFE27400" position="1"/>
+                    </RadialGradient>
+                </Fill>
+            </Shape>
+        </Node>
+        <Node opacity="0" name="Chevron 3" id="0:23">
+            <Shape x="42" y="84" name="On">
+                <Ellipse width="7.6" height="7.6" name="Path"/>
+                <Fill fillRule="clockwise" name="Glow">
+                    <SolidColor colorValue="B3FF9408" name="Color"/>
+                    <Feather strength="6" name="Feather"/>
+                </Fill>
+                <Fill name="Lens">
+                    <RadialGradient startX="-0.8" startY="-0.8" endX="4.4" endY="-0.8" name="Gradient">
+                        <GradientStop colorValue="FFFFF3C9" position="0"/>
+                        <GradientStop colorValue="FFFFB51E" position="0.5"/>
+                        <GradientStop colorValue="FFE27400" position="1"/>
+                    </RadialGradient>
+                </Fill>
+            </Shape>
+            <Shape x="51.75" y="87.25" name="On">
+                <Ellipse width="7.6" height="7.6" name="Path"/>
+                <Fill fillRule="clockwise" name="Glow">
+                    <SolidColor colorValue="B3FF9408" name="Color"/>
+                    <Feather strength="6" name="Feather"/>
+                </Fill>
+                <Fill name="Lens">
+                    <RadialGradient startX="-0.8" startY="-0.8" endX="4.4" endY="-0.8" name="Gradient">
+                        <GradientStop colorValue="FFFFF3C9" position="0"/>
+                        <GradientStop colorValue="FFFFB51E" position="0.5"/>
+                        <GradientStop colorValue="FFE27400" position="1"/>
+                    </RadialGradient>
+                </Fill>
+            </Shape>
+            <Shape x="61.5" y="90.5" name="On">
+                <Ellipse width="7.6" height="7.6" name="Path"/>
+                <Fill fillRule="clockwise" name="Glow">
+                    <SolidColor colorValue="B3FF9408" name="Color"/>
+                    <Feather strength="6" name="Feather"/>
+                </Fill>
+                <Fill name="Lens">
+                    <RadialGradient startX="-0.8" startY="-0.8" endX="4.4" endY="-0.8" name="Gradient">
+                        <GradientStop colorValue="FFFFF3C9" position="0"/>
+                        <GradientStop colorValue="FFFFB51E" position="0.5"/>
+                        <GradientStop colorValue="FFE27400" position="1"/>
+                    </RadialGradient>
+                </Fill>
+            </Shape>
+            <Shape x="71.25" y="93.75" name="On">
+                <Ellipse width="7.6" height="7.6" name="Path"/>
+                <Fill fillRule="clockwise" name="Glow">
+                    <SolidColor colorValue="B3FF9408" name="Color"/>
+                    <Feather strength="6" name="Feather"/>
+                </Fill>
+                <Fill name="Lens">
+                    <RadialGradient startX="-0.8" startY="-0.8" endX="4.4" endY="-0.8" name="Gradient">
+                        <GradientStop colorValue="FFFFF3C9" position="0"/>
+                        <GradientStop colorValue="FFFFB51E" position="0.5"/>
+                        <GradientStop colorValue="FFE27400" position="1"/>
+                    </RadialGradient>
+                </Fill>
+            </Shape>
+            <Shape x="81" y="97" name="On">
+                <Ellipse width="7.6" height="7.6" name="Path"/>
+                <Fill fillRule="clockwise" name="Glow">
+                    <SolidColor colorValue="B3FF9408" name="Color"/>
+                    <Feather strength="6" name="Feather"/>
+                </Fill>
+                <Fill name="Lens">
+                    <RadialGradient startX="-0.8" startY="-0.8" endX="4.4" endY="-0.8" name="Gradient">
+                        <GradientStop colorValue="FFFFF3C9" position="0"/>
+                        <GradientStop colorValue="FFFFB51E" position="0.5"/>
+                        <GradientStop colorValue="FFE27400" position="1"/>
+                    </RadialGradient>
+                </Fill>
+            </Shape>
+            <Shape x="90.75" y="100.25" name="On">
+                <Ellipse width="7.6" height="7.6" name="Path"/>
+                <Fill fillRule="clockwise" name="Glow">
+                    <SolidColor colorValue="B3FF9408" name="Color"/>
+                    <Feather strength="6" name="Feather"/>
+                </Fill>
+                <Fill name="Lens">
+                    <RadialGradient startX="-0.8" startY="-0.8" endX="4.4" endY="-0.8" name="Gradient">
+                        <GradientStop colorValue="FFFFF3C9" position="0"/>
+                        <GradientStop colorValue="FFFFB51E" position="0.5"/>
+                        <GradientStop colorValue="FFE27400" position="1"/>
+                    </RadialGradient>
+                </Fill>
+            </Shape>
+            <Shape x="100.5" y="103.5" name="On">
+                <Ellipse width="7.6" height="7.6" name="Path"/>
+                <Fill fillRule="clockwise" name="Glow">
+                    <SolidColor colorValue="B3FF9408" name="Color"/>
+                    <Feather strength="6" name="Feather"/>
+                </Fill>
+                <Fill name="Lens">
+                    <RadialGradient startX="-0.8" startY="-0.8" endX="4.4" endY="-0.8" name="Gradient">
+                        <GradientStop colorValue="FFFFF3C9" position="0"/>
+                        <GradientStop colorValue="FFFFB51E" position="0.5"/>
+                        <GradientStop colorValue="FFE27400" position="1"/>
+                    </RadialGradient>
+                </Fill>
+            </Shape>
+            <Shape x="110.25" y="106.75" name="On">
+                <Ellipse width="7.6" height="7.6" name="Path"/>
+                <Fill fillRule="clockwise" name="Glow">
+                    <SolidColor colorValue="B3FF9408" name="Color"/>
+                    <Feather strength="6" name="Feather"/>
+                </Fill>
+                <Fill name="Lens">
+                    <RadialGradient startX="-0.8" startY="-0.8" endX="4.4" endY="-0.8" name="Gradient">
+                        <GradientStop colorValue="FFFFF3C9" position="0"/>
+                        <GradientStop colorValue="FFFFB51E" position="0.5"/>
+                        <GradientStop colorValue="FFE27400" position="1"/>
+                    </RadialGradient>
+                </Fill>
+            </Shape>
+            <Shape x="120" y="110" name="On">
+                <Ellipse width="7.6" height="7.6" name="Path"/>
+                <Fill fillRule="clockwise" name="Glow">
+                    <SolidColor colorValue="B3FF9408" name="Color"/>
+                    <Feather strength="6" name="Feather"/>
+                </Fill>
+                <Fill name="Lens">
+                    <RadialGradient startX="-0.8" startY="-0.8" endX="4.4" endY="-0.8" name="Gradient">
+                        <GradientStop colorValue="FFFFF3C9" position="0"/>
+                        <GradientStop colorValue="FFFFB51E" position="0.5"/>
+                        <GradientStop colorValue="FFE27400" position="1"/>
+                    </RadialGradient>
+                </Fill>
+            </Shape>
+            <Shape x="129.75" y="106.75" name="On">
+                <Ellipse width="7.6" height="7.6" name="Path"/>
+                <Fill fillRule="clockwise" name="Glow">
+                    <SolidColor colorValue="B3FF9408" name="Color"/>
+                    <Feather strength="6" name="Feather"/>
+                </Fill>
+                <Fill name="Lens">
+                    <RadialGradient startX="-0.8" startY="-0.8" endX="4.4" endY="-0.8" name="Gradient">
+                        <GradientStop colorValue="FFFFF3C9" position="0"/>
+                        <GradientStop colorValue="FFFFB51E" position="0.5"/>
+                        <GradientStop colorValue="FFE27400" position="1"/>
+                    </RadialGradient>
+                </Fill>
+            </Shape>
+            <Shape x="139.5" y="103.5" name="On">
+                <Ellipse width="7.6" height="7.6" name="Path"/>
+                <Fill fillRule="clockwise" name="Glow">
+                    <SolidColor colorValue="B3FF9408" name="Color"/>
+                    <Feather strength="6" name="Feather"/>
+                </Fill>
+                <Fill name="Lens">
+                    <RadialGradient startX="-0.8" startY="-0.8" endX="4.4" endY="-0.8" name="Gradient">
+                        <GradientStop colorValue="FFFFF3C9" position="0"/>
+                        <GradientStop colorValue="FFFFB51E" position="0.5"/>
+                        <GradientStop colorValue="FFE27400" position="1"/>
+                    </RadialGradient>
+                </Fill>
+            </Shape>
+            <Shape x="149.25" y="100.25" name="On">
+                <Ellipse width="7.6" height="7.6" name="Path"/>
+                <Fill fillRule="clockwise" name="Glow">
+                    <SolidColor colorValue="B3FF9408" name="Color"/>
+                    <Feather strength="6" name="Feather"/>
+                </Fill>
+                <Fill name="Lens">
+                    <RadialGradient startX="-0.8" startY="-0.8" endX="4.4" endY="-0.8" name="Gradient">
+                        <GradientStop colorValue="FFFFF3C9" position="0"/>
+                        <GradientStop colorValue="FFFFB51E" position="0.5"/>
+                        <GradientStop colorValue="FFE27400" position="1"/>
+                    </RadialGradient>
+                </Fill>
+            </Shape>
+            <Shape x="159" y="97" name="On">
+                <Ellipse width="7.6" height="7.6" name="Path"/>
+                <Fill fillRule="clockwise" name="Glow">
+                    <SolidColor colorValue="B3FF9408" name="Color"/>
+                    <Feather strength="6" name="Feather"/>
+                </Fill>
+                <Fill name="Lens">
+                    <RadialGradient startX="-0.8" startY="-0.8" endX="4.4" endY="-0.8" name="Gradient">
+                        <GradientStop colorValue="FFFFF3C9" position="0"/>
+                        <GradientStop colorValue="FFFFB51E" position="0.5"/>
+                        <GradientStop colorValue="FFE27400" position="1"/>
+                    </RadialGradient>
+                </Fill>
+            </Shape>
+            <Shape x="168.75" y="93.75" name="On">
+                <Ellipse width="7.6" height="7.6" name="Path"/>
+                <Fill fillRule="clockwise" name="Glow">
+                    <SolidColor colorValue="B3FF9408" name="Color"/>
+                    <Feather strength="6" name="Feather"/>
+                </Fill>
+                <Fill name="Lens">
+                    <RadialGradient startX="-0.8" startY="-0.8" endX="4.4" endY="-0.8" name="Gradient">
+                        <GradientStop colorValue="FFFFF3C9" position="0"/>
+                        <GradientStop colorValue="FFFFB51E" position="0.5"/>
+                        <GradientStop colorValue="FFE27400" position="1"/>
+                    </RadialGradient>
+                </Fill>
+            </Shape>
+            <Shape x="178.5" y="90.5" name="On">
+                <Ellipse width="7.6" height="7.6" name="Path"/>
+                <Fill fillRule="clockwise" name="Glow">
+                    <SolidColor colorValue="B3FF9408" name="Color"/>
+                    <Feather strength="6" name="Feather"/>
+                </Fill>
+                <Fill name="Lens">
+                    <RadialGradient startX="-0.8" startY="-0.8" endX="4.4" endY="-0.8" name="Gradient">
+                        <GradientStop colorValue="FFFFF3C9" position="0"/>
+                        <GradientStop colorValue="FFFFB51E" position="0.5"/>
+                        <GradientStop colorValue="FFE27400" position="1"/>
+                    </RadialGradient>
+                </Fill>
+            </Shape>
+            <Shape x="188.25" y="87.25" name="On">
+                <Ellipse width="7.6" height="7.6" name="Path"/>
+                <Fill fillRule="clockwise" name="Glow">
+                    <SolidColor colorValue="B3FF9408" name="Color"/>
+                    <Feather strength="6" name="Feather"/>
+                </Fill>
+                <Fill name="Lens">
+                    <RadialGradient startX="-0.8" startY="-0.8" endX="4.4" endY="-0.8" name="Gradient">
+                        <GradientStop colorValue="FFFFF3C9" position="0"/>
+                        <GradientStop colorValue="FFFFB51E" position="0.5"/>
+                        <GradientStop colorValue="FFE27400" position="1"/>
+                    </RadialGradient>
+                </Fill>
+            </Shape>
+            <Shape x="198" y="84" name="On">
+                <Ellipse width="7.6" height="7.6" name="Path"/>
+                <Fill fillRule="clockwise" name="Glow">
+                    <SolidColor colorValue="B3FF9408" name="Color"/>
+                    <Feather strength="6" name="Feather"/>
+                </Fill>
+                <Fill name="Lens">
+                    <RadialGradient startX="-0.8" startY="-0.8" endX="4.4" endY="-0.8" name="Gradient">
+                        <GradientStop colorValue="FFFFF3C9" position="0"/>
+                        <GradientStop colorValue="FFFFB51E" position="0.5"/>
+                        <GradientStop colorValue="FFE27400" position="1"/>
+                    </RadialGradient>
+                </Fill>
+            </Shape>
+        </Node>
+
+        <Node name="Lamps off" id="0:20">
+            <Shape x="42" y="24" name="Off">
+                <Ellipse width="7.6" height="7.6" name="Path"/>
+                <Fill name="Fill"><SolidColor colorValue="FF2A1A07" name="Color"/></Fill>
+            </Shape>
+            <Shape x="51.75" y="27.25" name="Off">
+                <Ellipse width="7.6" height="7.6" name="Path"/>
+                <Fill name="Fill"><SolidColor colorValue="FF2A1A07" name="Color"/></Fill>
+            </Shape>
+            <Shape x="61.5" y="30.5" name="Off">
+                <Ellipse width="7.6" height="7.6" name="Path"/>
+                <Fill name="Fill"><SolidColor colorValue="FF2A1A07" name="Color"/></Fill>
+            </Shape>
+            <Shape x="71.25" y="33.75" name="Off">
+                <Ellipse width="7.6" height="7.6" name="Path"/>
+                <Fill name="Fill"><SolidColor colorValue="FF2A1A07" name="Color"/></Fill>
+            </Shape>
+            <Shape x="81" y="37" name="Off">
+                <Ellipse width="7.6" height="7.6" name="Path"/>
+                <Fill name="Fill"><SolidColor colorValue="FF2A1A07" name="Color"/></Fill>
+            </Shape>
+            <Shape x="90.75" y="40.25" name="Off">
+                <Ellipse width="7.6" height="7.6" name="Path"/>
+                <Fill name="Fill"><SolidColor colorValue="FF2A1A07" name="Color"/></Fill>
+            </Shape>
+            <Shape x="100.5" y="43.5" name="Off">
+                <Ellipse width="7.6" height="7.6" name="Path"/>
+                <Fill name="Fill"><SolidColor colorValue="FF2A1A07" name="Color"/></Fill>
+            </Shape>
+            <Shape x="110.25" y="46.75" name="Off">
+                <Ellipse width="7.6" height="7.6" name="Path"/>
+                <Fill name="Fill"><SolidColor colorValue="FF2A1A07" name="Color"/></Fill>
+            </Shape>
+            <Shape x="120" y="50" name="Off">
+                <Ellipse width="7.6" height="7.6" name="Path"/>
+                <Fill name="Fill"><SolidColor colorValue="FF2A1A07" name="Color"/></Fill>
+            </Shape>
+            <Shape x="129.75" y="46.75" name="Off">
+                <Ellipse width="7.6" height="7.6" name="Path"/>
+                <Fill name="Fill"><SolidColor colorValue="FF2A1A07" name="Color"/></Fill>
+            </Shape>
+            <Shape x="139.5" y="43.5" name="Off">
+                <Ellipse width="7.6" height="7.6" name="Path"/>
+                <Fill name="Fill"><SolidColor colorValue="FF2A1A07" name="Color"/></Fill>
+            </Shape>
+            <Shape x="149.25" y="40.25" name="Off">
+                <Ellipse width="7.6" height="7.6" name="Path"/>
+                <Fill name="Fill"><SolidColor colorValue="FF2A1A07" name="Color"/></Fill>
+            </Shape>
+            <Shape x="159" y="37" name="Off">
+                <Ellipse width="7.6" height="7.6" name="Path"/>
+                <Fill name="Fill"><SolidColor colorValue="FF2A1A07" name="Color"/></Fill>
+            </Shape>
+            <Shape x="168.75" y="33.75" name="Off">
+                <Ellipse width="7.6" height="7.6" name="Path"/>
+                <Fill name="Fill"><SolidColor colorValue="FF2A1A07" name="Color"/></Fill>
+            </Shape>
+            <Shape x="178.5" y="30.5" name="Off">
+                <Ellipse width="7.6" height="7.6" name="Path"/>
+                <Fill name="Fill"><SolidColor colorValue="FF2A1A07" name="Color"/></Fill>
+            </Shape>
+            <Shape x="188.25" y="27.25" name="Off">
+                <Ellipse width="7.6" height="7.6" name="Path"/>
+                <Fill name="Fill"><SolidColor colorValue="FF2A1A07" name="Color"/></Fill>
+            </Shape>
+            <Shape x="198" y="24" name="Off">
+                <Ellipse width="7.6" height="7.6" name="Path"/>
+                <Fill name="Fill"><SolidColor colorValue="FF2A1A07" name="Color"/></Fill>
+            </Shape>
+            <Shape x="42" y="54" name="Off">
+                <Ellipse width="7.6" height="7.6" name="Path"/>
+                <Fill name="Fill"><SolidColor colorValue="FF2A1A07" name="Color"/></Fill>
+            </Shape>
+            <Shape x="51.75" y="57.25" name="Off">
+                <Ellipse width="7.6" height="7.6" name="Path"/>
+                <Fill name="Fill"><SolidColor colorValue="FF2A1A07" name="Color"/></Fill>
+            </Shape>
+            <Shape x="61.5" y="60.5" name="Off">
+                <Ellipse width="7.6" height="7.6" name="Path"/>
+                <Fill name="Fill"><SolidColor colorValue="FF2A1A07" name="Color"/></Fill>
+            </Shape>
+            <Shape x="71.25" y="63.75" name="Off">
+                <Ellipse width="7.6" height="7.6" name="Path"/>
+                <Fill name="Fill"><SolidColor colorValue="FF2A1A07" name="Color"/></Fill>
+            </Shape>
+            <Shape x="81" y="67" name="Off">
+                <Ellipse width="7.6" height="7.6" name="Path"/>
+                <Fill name="Fill"><SolidColor colorValue="FF2A1A07" name="Color"/></Fill>
+            </Shape>
+            <Shape x="90.75" y="70.25" name="Off">
+                <Ellipse width="7.6" height="7.6" name="Path"/>
+                <Fill name="Fill"><SolidColor colorValue="FF2A1A07" name="Color"/></Fill>
+            </Shape>
+            <Shape x="100.5" y="73.5" name="Off">
+                <Ellipse width="7.6" height="7.6" name="Path"/>
+                <Fill name="Fill"><SolidColor colorValue="FF2A1A07" name="Color"/></Fill>
+            </Shape>
+            <Shape x="110.25" y="76.75" name="Off">
+                <Ellipse width="7.6" height="7.6" name="Path"/>
+                <Fill name="Fill"><SolidColor colorValue="FF2A1A07" name="Color"/></Fill>
+            </Shape>
+            <Shape x="120" y="80" name="Off">
+                <Ellipse width="7.6" height="7.6" name="Path"/>
+                <Fill name="Fill"><SolidColor colorValue="FF2A1A07" name="Color"/></Fill>
+            </Shape>
+            <Shape x="129.75" y="76.75" name="Off">
+                <Ellipse width="7.6" height="7.6" name="Path"/>
+                <Fill name="Fill"><SolidColor colorValue="FF2A1A07" name="Color"/></Fill>
+            </Shape>
+            <Shape x="139.5" y="73.5" name="Off">
+                <Ellipse width="7.6" height="7.6" name="Path"/>
+                <Fill name="Fill"><SolidColor colorValue="FF2A1A07" name="Color"/></Fill>
+            </Shape>
+            <Shape x="149.25" y="70.25" name="Off">
+                <Ellipse width="7.6" height="7.6" name="Path"/>
+                <Fill name="Fill"><SolidColor colorValue="FF2A1A07" name="Color"/></Fill>
+            </Shape>
+            <Shape x="159" y="67" name="Off">
+                <Ellipse width="7.6" height="7.6" name="Path"/>
+                <Fill name="Fill"><SolidColor colorValue="FF2A1A07" name="Color"/></Fill>
+            </Shape>
+            <Shape x="168.75" y="63.75" name="Off">
+                <Ellipse width="7.6" height="7.6" name="Path"/>
+                <Fill name="Fill"><SolidColor colorValue="FF2A1A07" name="Color"/></Fill>
+            </Shape>
+            <Shape x="178.5" y="60.5" name="Off">
+                <Ellipse width="7.6" height="7.6" name="Path"/>
+                <Fill name="Fill"><SolidColor colorValue="FF2A1A07" name="Color"/></Fill>
+            </Shape>
+            <Shape x="188.25" y="57.25" name="Off">
+                <Ellipse width="7.6" height="7.6" name="Path"/>
+                <Fill name="Fill"><SolidColor colorValue="FF2A1A07" name="Color"/></Fill>
+            </Shape>
+            <Shape x="198" y="54" name="Off">
+                <Ellipse width="7.6" height="7.6" name="Path"/>
+                <Fill name="Fill"><SolidColor colorValue="FF2A1A07" name="Color"/></Fill>
+            </Shape>
+            <Shape x="42" y="84" name="Off">
+                <Ellipse width="7.6" height="7.6" name="Path"/>
+                <Fill name="Fill"><SolidColor colorValue="FF2A1A07" name="Color"/></Fill>
+            </Shape>
+            <Shape x="51.75" y="87.25" name="Off">
+                <Ellipse width="7.6" height="7.6" name="Path"/>
+                <Fill name="Fill"><SolidColor colorValue="FF2A1A07" name="Color"/></Fill>
+            </Shape>
+            <Shape x="61.5" y="90.5" name="Off">
+                <Ellipse width="7.6" height="7.6" name="Path"/>
+                <Fill name="Fill"><SolidColor colorValue="FF2A1A07" name="Color"/></Fill>
+            </Shape>
+            <Shape x="71.25" y="93.75" name="Off">
+                <Ellipse width="7.6" height="7.6" name="Path"/>
+                <Fill name="Fill"><SolidColor colorValue="FF2A1A07" name="Color"/></Fill>
+            </Shape>
+            <Shape x="81" y="97" name="Off">
+                <Ellipse width="7.6" height="7.6" name="Path"/>
+                <Fill name="Fill"><SolidColor colorValue="FF2A1A07" name="Color"/></Fill>
+            </Shape>
+            <Shape x="90.75" y="100.25" name="Off">
+                <Ellipse width="7.6" height="7.6" name="Path"/>
+                <Fill name="Fill"><SolidColor colorValue="FF2A1A07" name="Color"/></Fill>
+            </Shape>
+            <Shape x="100.5" y="103.5" name="Off">
+                <Ellipse width="7.6" height="7.6" name="Path"/>
+                <Fill name="Fill"><SolidColor colorValue="FF2A1A07" name="Color"/></Fill>
+            </Shape>
+            <Shape x="110.25" y="106.75" name="Off">
+                <Ellipse width="7.6" height="7.6" name="Path"/>
+                <Fill name="Fill"><SolidColor colorValue="FF2A1A07" name="Color"/></Fill>
+            </Shape>
+            <Shape x="120" y="110" name="Off">
+                <Ellipse width="7.6" height="7.6" name="Path"/>
+                <Fill name="Fill"><SolidColor colorValue="FF2A1A07" name="Color"/></Fill>
+            </Shape>
+            <Shape x="129.75" y="106.75" name="Off">
+                <Ellipse width="7.6" height="7.6" name="Path"/>
+                <Fill name="Fill"><SolidColor colorValue="FF2A1A07" name="Color"/></Fill>
+            </Shape>
+            <Shape x="139.5" y="103.5" name="Off">
+                <Ellipse width="7.6" height="7.6" name="Path"/>
+                <Fill name="Fill"><SolidColor colorValue="FF2A1A07" name="Color"/></Fill>
+            </Shape>
+            <Shape x="149.25" y="100.25" name="Off">
+                <Ellipse width="7.6" height="7.6" name="Path"/>
+                <Fill name="Fill"><SolidColor colorValue="FF2A1A07" name="Color"/></Fill>
+            </Shape>
+            <Shape x="159" y="97" name="Off">
+                <Ellipse width="7.6" height="7.6" name="Path"/>
+                <Fill name="Fill"><SolidColor colorValue="FF2A1A07" name="Color"/></Fill>
+            </Shape>
+            <Shape x="168.75" y="93.75" name="Off">
+                <Ellipse width="7.6" height="7.6" name="Path"/>
+                <Fill name="Fill"><SolidColor colorValue="FF2A1A07" name="Color"/></Fill>
+            </Shape>
+            <Shape x="178.5" y="90.5" name="Off">
+                <Ellipse width="7.6" height="7.6" name="Path"/>
+                <Fill name="Fill"><SolidColor colorValue="FF2A1A07" name="Color"/></Fill>
+            </Shape>
+            <Shape x="188.25" y="87.25" name="Off">
+                <Ellipse width="7.6" height="7.6" name="Path"/>
+                <Fill name="Fill"><SolidColor colorValue="FF2A1A07" name="Color"/></Fill>
+            </Shape>
+            <Shape x="198" y="84" name="Off">
+                <Ellipse width="7.6" height="7.6" name="Path"/>
+                <Fill name="Fill"><SolidColor colorValue="FF2A1A07" name="Color"/></Fill>
+            </Shape>
+        </Node>
+
+        <Shape x="120.0" y="75.0" name="Panel" id="0:10">
+            <Rectangle width="228" height="138" cornerRadiusTL="7" name="Path"/>
+            <Fill name="Matte">
+                <LinearGradient startX="0" startY="-69" endX="0" endY="69" name="Gradient">
+                    <GradientStop colorValue="FF141514" position="0"/>
+                    <GradientStop colorValue="FF0A0B0A" position="1"/>
+                </LinearGradient>
+            </Fill>
+            <Stroke thickness="2" name="Frame">
+                <SolidColor colorValue="FF3B3E3B" name="Color"/>
+            </Stroke>
+        </Shape>
+        <LinearAnimation loopValue="loop" fps="60" duration="96" name="Sequence" id="0:60">
+            <KeyedObject objectId="0:21">
+                <KeyedProperty property="opacity">
+                    <KeyFrameDouble value="1" frame="0" interpolationType="hold"/>
+                    <KeyFrameDouble value="1" frame="72" interpolationType="hold"/>
+                    <KeyFrameDouble value="0.3" frame="73" interpolationType="linear"/>
+                    <KeyFrameDouble value="0" frame="80" interpolationType="hold"/>
+                    <KeyFrameDouble value="0" frame="96" interpolationType="hold"/>
+                </KeyedProperty>
+            </KeyedObject>
+            <KeyedObject objectId="0:22">
+                <KeyedProperty property="opacity">
+                    <KeyFrameDouble value="0" frame="0" interpolationType="hold"/>
+                    <KeyFrameDouble value="1" frame="24" interpolationType="hold"/>
+                    <KeyFrameDouble value="1" frame="72" interpolationType="hold"/>
+                    <KeyFrameDouble value="0.3" frame="73" interpolationType="linear"/>
+                    <KeyFrameDouble value="0" frame="80" interpolationType="hold"/>
+                    <KeyFrameDouble value="0" frame="96" interpolationType="hold"/>
+                </KeyedProperty>
+            </KeyedObject>
+            <KeyedObject objectId="0:23">
+                <KeyedProperty property="opacity">
+                    <KeyFrameDouble value="0" frame="0" interpolationType="hold"/>
+                    <KeyFrameDouble value="1" frame="48" interpolationType="hold"/>
+                    <KeyFrameDouble value="1" frame="72" interpolationType="hold"/>
+                    <KeyFrameDouble value="0.3" frame="73" interpolationType="linear"/>
+                    <KeyFrameDouble value="0" frame="80" interpolationType="hold"/>
+                    <KeyFrameDouble value="0" frame="96" interpolationType="hold"/>
+                </KeyedProperty>
+            </KeyedObject>
+        </LinearAnimation>
+        <LinearAnimation fps="60" duration="1" name="Hold" id="0:61">
+            <KeyedObject objectId="0:21">
+                <KeyedProperty property="opacity">
+                    <KeyFrameDouble value="1" frame="0" interpolationType="hold"/>
+                </KeyedProperty>
+            </KeyedObject>
+            <KeyedObject objectId="0:22">
+                <KeyedProperty property="opacity">
+                    <KeyFrameDouble value="1" frame="0" interpolationType="hold"/>
+                </KeyedProperty>
+            </KeyedObject>
+            <KeyedObject objectId="0:23">
+                <KeyedProperty property="opacity">
+                    <KeyFrameDouble value="1" frame="0" interpolationType="hold"/>
+                </KeyedProperty>
+            </KeyedObject>
+        </LinearAnimation>
+        <LinearAnimation fps="60" duration="1" name="Calm" id="0:62">
+            <KeyedObject objectId="0:21">
+                <KeyedProperty property="opacity">
+                    <KeyFrameDouble value="1" frame="0" interpolationType="hold"/>
+                </KeyedProperty>
+            </KeyedObject>
+            <KeyedObject objectId="0:22">
+                <KeyedProperty property="opacity">
+                    <KeyFrameDouble value="1" frame="0" interpolationType="hold"/>
+                </KeyedProperty>
+            </KeyedObject>
+            <KeyedObject objectId="0:23">
+                <KeyedProperty property="opacity">
+                    <KeyFrameDouble value="1" frame="0" interpolationType="hold"/>
+                </KeyedProperty>
+            </KeyedObject>
+        </LinearAnimation>
+    </Artboard>
+</Rive>
