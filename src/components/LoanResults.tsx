@@ -1,3 +1,4 @@
+import { tidy } from '../lib/money';
 import type { CalculationInput, CalculationResult } from '../lib/calculator';
 import { PROVINCES } from '../lib/calculator';
 import DotMatrix from './DotMatrix';
@@ -14,8 +15,6 @@ interface Props {
 const fmt = (n: number, decimals = 2) =>
   n.toLocaleString(undefined, { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
 
-const whole = (n: number) => n.toLocaleString(undefined, { maximumFractionDigits: 0 });
-
 /** Narrowest board the headline figure sits on; longer figures widen it. */
 const MIN_BOARD_COLS = 9;
 
@@ -24,18 +23,23 @@ const TIER_TONE: Record<string, string> = { Prime: 'green', Limited: 'yellow' };
 const LoanResults: React.FC<Props> = ({ inputs, results, reverseMode, targetBiWeeklyPayment, targetMonthlyPayment }) => {
   const selectedProv = PROVINCES.find((p) => p.code === (inputs.provinceCode || 'ON')) || PROVINCES[0];
 
-  const headline = reverseMode ? `$${whole(results.maxVehiclePrice)}` : `$${fmt(results.biWeeklyPayment)}`;
+  const headline = reverseMode ? `$${fmt(results.maxVehiclePrice)}` : `$${fmt(results.biWeeklyPayment)}`;
   const headlineLabel = reverseMode ? 'Max vehicle price, before tax' : 'Bi-weekly payment';
 
+  // Rounded separately first, so the total on screen is exactly the sum of the two lines above it.
+  const financed = Math.round(results.loanPrincipal * 100) / 100;
+  const interest = Math.round(results.totalInterest * 100) / 100;
+  const totalCost = financed + interest;
+
   const included = [
-    `$${results.licensingFee.toLocaleString()} licensing`,
+    `$${tidy(results.licensingFee)} licensing`,
     selectedProv.regulatingFee > 0 && `$${selectedProv.regulatingFee} ${selectedProv.regulatingFeeName}`,
-    results.lenderAdminFee > 0 && `$${results.lenderAdminFee.toLocaleString()} lender admin`,
-    results.dealerAdminFee > 0 && `$${results.dealerAdminFee.toLocaleString()} dealer admin`,
-    results.ppsaFee > 0 && `$${results.ppsaFee.toLocaleString()} PPSA (approx.)`,
-    results.warranty > 0 && `$${results.warranty.toLocaleString()} warranty`,
-    results.safetyCertification > 0 && `$${results.safetyCertification.toLocaleString()} safety cert`,
-    results.otherFees > 0 && `$${results.otherFees.toLocaleString()} other fees`,
+    results.lenderAdminFee > 0 && `$${tidy(results.lenderAdminFee)} lender admin`,
+    results.dealerAdminFee > 0 && `$${tidy(results.dealerAdminFee)} dealer admin`,
+    results.ppsaFee > 0 && `$${tidy(results.ppsaFee)} PPSA (approx.)`,
+    results.warranty > 0 && `$${tidy(results.warranty)} warranty`,
+    results.safetyCertification > 0 && `$${tidy(results.safetyCertification)} safety cert`,
+    results.otherFees > 0 && `$${tidy(results.otherFees)} other fees`,
   ].filter(Boolean);
 
   return (
@@ -54,11 +58,11 @@ const LoanResults: React.FC<Props> = ({ inputs, results, reverseMode, targetBiWe
             <>
               <div>
                 <dt>Bi-weekly budget</dt>
-                <dd>${targetBiWeeklyPayment.toLocaleString()}</dd>
+                <dd>${fmt(targetBiWeeklyPayment)}</dd>
               </div>
               <div>
                 <dt>Monthly budget</dt>
-                <dd>${targetMonthlyPayment.toLocaleString()}</dd>
+                <dd>${fmt(targetMonthlyPayment)}</dd>
               </div>
             </>
           ) : (
@@ -111,15 +115,15 @@ const LoanResults: React.FC<Props> = ({ inputs, results, reverseMode, targetBiWe
         </div>
         <div>
           <dt>Amount financed</dt>
-          <dd>${whole(results.loanPrincipal)}</dd>
+          <dd>${fmt(financed)}</dd>
         </div>
         <div>
           <dt>Total interest</dt>
-          <dd>${whole(results.totalInterest)}</dd>
+          <dd>${fmt(interest)}</dd>
         </div>
         <div>
           <dt>Total loan cost</dt>
-          <dd>${whole(results.totalCost)}</dd>
+          <dd>${fmt(totalCost)}</dd>
         </div>
         <div>
           <dt>Condition</dt>
@@ -130,10 +134,10 @@ const LoanResults: React.FC<Props> = ({ inputs, results, reverseMode, targetBiWe
       {(results.financedNegativeEquity > 0 || results.excessNegativeEquity > 0) && (
         <div className={`notice${results.excessNegativeEquity > 0 ? ' notice--over' : ''}`}>
           <strong>Negative equity (lien minus trade-in)</strong>
-          <span>${results.financedNegativeEquity.toLocaleString()} rolled into financing.</span>
+          <span>${tidy(results.financedNegativeEquity)} rolled into financing.</span>
           {results.excessNegativeEquity > 0 && (
             <span>
-              ${results.excessNegativeEquity.toLocaleString()} is past the 40% cap and has been added to the minimum down payment.
+              ${tidy(results.excessNegativeEquity)} is past the 40% cap and has been added to the minimum down payment.
             </span>
           )}
         </div>

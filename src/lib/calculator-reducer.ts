@@ -34,6 +34,9 @@ export type CalculatorAction =
   | { type: 'SET_TARGET_MONTHLY'; value: number }
   | { type: 'RESET' };
 
+/** Rounds a dollar amount to the nearest cent. */
+const toCents = (amount: number): number => Math.round(amount * 100) / 100;
+
 // ── No URL state — all state is in-memory only ──────────────────────
 
 export function syncURL(_state: CalculatorState): void {
@@ -320,8 +323,8 @@ export function calculatorReducer(state: CalculatorState, action: CalculatorActi
         };
       }
       // Forward → Reverse: seed targets from current results, clamp down to minimum
-      const targetBiWeekly = Math.round(state.results.biWeeklyPayment);
-      const targetMonthly = Math.round(state.results.monthlyPayment);
+      const targetBiWeekly = toCents(state.results.biWeeklyPayment);
+      const targetMonthly = toCents(state.results.monthlyPayment);
       const downPayment = Math.max(0, state.results.minDownPaymentRequired);
       const newState: CalculatorState = {
         ...state,
@@ -340,7 +343,7 @@ export function calculatorReducer(state: CalculatorState, action: CalculatorActi
     }
 
     case 'SET_TARGET_BIWEEKLY': {
-      const newMonthly = Math.round((action.value * 26) / 12);
+      const newMonthly = toCents((action.value * 26) / 12);
       const newState = {
         ...state,
         targetBiWeeklyPayment: action.value,
@@ -356,7 +359,7 @@ export function calculatorReducer(state: CalculatorState, action: CalculatorActi
     }
 
     case 'SET_TARGET_MONTHLY': {
-      const newBiWeekly = Math.round((action.value * 12) / 26);
+      const newBiWeekly = toCents((action.value * 12) / 26);
       const newState = {
         ...state,
         targetBiWeeklyPayment: newBiWeekly,
