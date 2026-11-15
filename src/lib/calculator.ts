@@ -208,7 +208,8 @@ export function computeAmortization(
 
   for (let i = 1; i <= totalPeriods; i++) {
     const interestPayment = currentBalance * biWeeklyRate;
-    const principalPayment = Math.min(currentBalance, biWeeklyPayment - interestPayment);
+    // Never negative: at extreme rates rounding can leave the payment a hair under the interest.
+    const principalPayment = Math.max(0, Math.min(currentBalance, biWeeklyPayment - interestPayment));
     currentBalance = Math.max(0, currentBalance - principalPayment);
     schedule.push({
       period: i,
@@ -233,7 +234,7 @@ export function computeLumpSumAmortization(
 
   for (let i = 1; i <= maxPeriods; i++) {
     const interestPayment = currentBalance * biWeeklyRate;
-    const standardPrincipal = Math.min(currentBalance, biWeeklyPayment - interestPayment);
+    const standardPrincipal = Math.max(0, Math.min(currentBalance, biWeeklyPayment - interestPayment));
     const extraAmount = extraPayments[i] || 0;
     const totalPrincipal = Math.min(currentBalance, standardPrincipal + extraAmount);
     const actualPayment = standardPrincipal + interestPayment + extraAmount;
@@ -339,9 +340,11 @@ export const calculateAutoLoan = (input: CalculationInput): CalculationResult =>
   let monthlyPayment = 0;
 
   if (apr > 0) {
-    monthlyPayment = loanPrincipal *
-      (monthlyRate * Math.pow(1 + monthlyRate, termMonths)) /
-      (Math.pow(1 + monthlyRate, termMonths) - 1);
+    const growth = Math.pow(1 + monthlyRate, termMonths);
+    // At absurd rates the growth factor overflows; the formula's limit there is interest-only.
+    monthlyPayment = Number.isFinite(growth)
+      ? loanPrincipal * (monthlyRate * growth) / (growth - 1)
+      : loanPrincipal * monthlyRate;
   } else {
     monthlyPayment = loanPrincipal / termMonths;
   }

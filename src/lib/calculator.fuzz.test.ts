@@ -246,6 +246,18 @@ function randomAction(r: Rand, reverseMode: boolean): CalculatorAction {
   return { type: 'RESET' };
 }
 
+describe('rates far outside any real loan', { timeout: LONG }, () => {
+  it('still give a finite payment instead of overflowing', () => {
+    const r = rng(SEED ^ 0x00c0ffee);
+    for (const apr of [100, 5000, 81_095, 1e6, 1e9, 1e12]) {
+      for (let i = 0; i < 50; i++) {
+        const res = calculateAutoLoan({ ...randomDeal(r), apr });
+        expectSaneNumbers(res, `apr ${apr}`);
+      }
+    }
+  });
+});
+
 describe('reducer fuzz', { timeout: LONG }, () => {
   it('survives any sequence of actions with a usable state', () => {
     const sessions = Math.max(50, Math.floor(RUNS / 40));
