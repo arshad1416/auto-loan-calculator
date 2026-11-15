@@ -1466,17 +1466,12 @@ select {
   gap: 1rem;
   padding: 0.9rem 0.4rem;
   border-bottom: 1px dashed var(--rule);
-  text-decoration: none;
-  transition: background-color 0.2s;
-}
-
-.listing:hover {
-  background: var(--asphalt-3);
 }
 
 .listing__body {
   display: grid;
   gap: 0.1rem;
+  min-width: 0;
   color: var(--muted);
   font-size: 0.84rem;
 }
@@ -1486,15 +1481,27 @@ select {
   font-size: 1rem;
 }
 
-.listing__payment,
 .listing__price {
   color: var(--amber);
   font-family: var(--mono);
-}
-
-.listing__price {
   font-size: 1.1rem;
   font-weight: 600;
+  white-space: nowrap;
+}
+
+.listing--over .listing__body strong,
+.listing--over .listing__price {
+  color: var(--muted);
+}
+
+.listings__foot {
+  color: var(--muted);
+  font-size: 0.8rem;
+  line-height: 1.5;
+}
+
+.listings a {
+  color: var(--amber);
 }
 
 .spinner {
