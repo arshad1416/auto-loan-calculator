@@ -62,27 +62,27 @@ describe('availableDesjardinsRates — reserve gating', () => {
 
   it('drops 9.49% and 9.99% at high amounts where their reserve is N/A', () => {
     const at60k = availableDesjardinsRates(60000, 2024, 60).map((r) => r.apr);
-    expect(at60k).toEqual([6.95, 7.45, 7.99, 8.49, 8.99]);
+    expect(at60k).toEqual([6.95, 7.99, 8.49, 8.99]);
     // 8.99 row is N/A at 75k+
     const at80k = availableDesjardinsRates(80000, 2024, 60).map((r) => r.apr);
-    expect(at80k).toEqual([6.95, 7.45, 7.99, 8.49]);
+    expect(at80k).toEqual([6.95, 7.99, 8.49]);
   });
 
-  it('gates promo rates behind the $25,000 reserve floor', () => {
-    const at24999 = availableDesjardinsRates(24999, 2023, 60).map((r) => r.apr);
-    expect(at24999).not.toContain(6.95);
-    expect(at24999).not.toContain(7.45);
+  it('gates the promo rate behind the $30,000 reserve floor', () => {
+    const at29999 = availableDesjardinsRates(29999, 2023, 60).map((r) => r.apr);
+    expect(at29999).not.toContain(6.95);
 
-    const at25000 = availableDesjardinsRates(25000, 2023, 60);
-    expect(at25000.map((r) => r.apr)).toEqual([6.95, 7.45, 7.99, 8.49, 8.99, 9.49, 9.99]);
-    expect(at25000[0]).toMatchObject({ apr: 6.95, reservePct: 0.25, kind: 'promo' });
+    const at30000 = availableDesjardinsRates(30000, 2023, 60);
+    expect(at30000.map((r) => r.apr)).toEqual([6.95, 7.99, 8.49, 8.99, 9.49, 9.99]);
+    expect(at30000[0]).toMatchObject({ apr: 6.95, reservePct: 0.10, kind: 'promo' });
   });
 
   it('restricts promo eligibility by model year', () => {
-    // 6.95% promo: 2021-2027 only; 7.45%: 2019-2027
-    const at2020 = availableDesjardinsRates(30000, 2020, 60).map((r) => r.apr);
-    expect(at2020).not.toContain(6.95);
-    expect(at2020).toContain(7.45);
+    // 6.95% promo: 2023-2027 only (the 7.45% promo left the sheet on Nov 3, 2026)
+    const at2022 = availableDesjardinsRates(30000, 2022, 60).map((r) => r.apr);
+    expect(at2022).not.toContain(6.95);
+    expect(at2022).not.toContain(7.45);
+    expect(availableDesjardinsRates(30000, 2023, 60).map((r) => r.apr)).toContain(6.95);
   });
 });
 
@@ -90,13 +90,13 @@ describe('availableDesjardinsRates — term and year adjustments', () => {
   it('uses the extended APR column for 85+ month terms', () => {
     const at84 = availableDesjardinsRates(30000, 2024, 84).map((r) => r.apr);
     const at96 = availableDesjardinsRates(30000, 2024, 96).map((r) => r.apr);
-    expect(at84).toEqual([6.95, 7.45, 7.99, 8.49, 8.99, 9.49, 9.99]);
-    expect(at96).toEqual([6.95, 7.45, 8.99, 9.49, 9.99, 10.49, 10.99]);
+    expect(at84).toEqual([6.95, 7.99, 8.49, 8.99, 9.49, 9.99]);
+    expect(at96).toEqual([6.95, 8.99, 9.49, 9.99, 10.49, 10.99]);
   });
 
   it('keeps promo APRs flat at long terms ("no increase")', () => {
     const promos = availableDesjardinsRates(30000, 2024, 96).filter((r) => r.kind === 'promo');
-    expect(promos.map((r) => r.apr)).toEqual([6.95, 7.45]);
+    expect(promos.map((r) => r.apr)).toEqual([6.95]);
   });
 
   it('applies the 2% premium to 2018-and-older models', () => {
@@ -104,14 +104,14 @@ describe('availableDesjardinsRates — term and year adjustments', () => {
     // 7.99 base becomes 9.99 for a 2017 unit, same reserve as the 7.99 row
     expect(rates.map((r) => r.apr)).toContain(9.99);
     const r = rates.find((x) => x.apr === 9.99);
-    expect(r?.reservePct).toBe(1.70);
+    expect(r?.reservePct).toBe(1.60);
   });
 });
 
 describe('desjardinsReserveFor', () => {
   it('returns the reserve for a backed rate', () => {
-    expect(desjardinsReserveFor(7.99, 25000, 2024, 60)).toBe(1.15);
-    expect(desjardinsReserveFor(6.95, 32000, 2023, 60)).toBe(0.75);
+    expect(desjardinsReserveFor(7.99, 25000, 2024, 60)).toBe(0.90);
+    expect(desjardinsReserveFor(6.95, 32000, 2023, 60)).toBe(0.10);
   });
 
   it('returns null for N/A rates and unknown rates', () => {

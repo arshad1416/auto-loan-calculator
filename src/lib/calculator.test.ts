@@ -17,27 +17,27 @@ const baseInput: CalculationInput = {
 describe('calculateAutoLoan', () => {
   // ── Year-based lending rules ──────────────────────────────────────
 
-  it('2023+ vehicles: 96mo max, 6.99% min APR, no down payment required, Prime tier', () => {
+  it('2023+ vehicles: 96mo max, 6.95% min APR, no down payment required, Prime tier', () => {
     const r = calculateAutoLoan({ ...baseInput, vehicleYear: 2023 });
     expect(r.maxTermAllowed).toBe(96);
-    expect(r.minApr).toBe(6.99);
+    expect(r.minApr).toBe(6.95);
     expect(r.minDownPaymentRequired).toBe(0);
     expect(r.isBankFinancable).toBe(true);
     expect(r.financingTier).toBe('Prime');
   });
 
-  it('2024+ new vehicles: 96mo max, 6.99% min APR, Prime tier', () => {
+  it('2024+ new vehicles: 96mo max, 6.95% min APR, Prime tier', () => {
     const r = calculateAutoLoan({ ...baseInput, vehicleYear: 2024, vehicleCondition: 'new' });
     expect(r.maxTermAllowed).toBe(96);
-    expect(r.minApr).toBe(6.99);
+    expect(r.minApr).toBe(6.95);
     expect(r.isBankFinancable).toBe(true);
     expect(r.financingTier).toBe('Prime');
   });
 
-  it('2021-2022 vehicles: 84mo max, 7.99% min APR, Prime tier', () => {
+  it('2021-2022 vehicles: 84mo max, 6.99% min APR, Prime tier', () => {
     const r = calculateAutoLoan({ ...baseInput, vehicleYear: 2021 });
     expect(r.maxTermAllowed).toBe(84);
-    expect(r.minApr).toBe(7.99);
+    expect(r.minApr).toBe(6.99);
     expect(r.isBankFinancable).toBe(true);
     expect(r.financingTier).toBe('Prime');
   });
@@ -50,29 +50,36 @@ describe('calculateAutoLoan', () => {
     expect(r.financingTier).toBe('Prime');
   });
 
-  it('2018 vehicles: 72mo max, 8.99% min APR, Prime tier', () => {
+  it('2018 vehicles: 72mo max, 7.99% min APR, Prime tier', () => {
     const r = calculateAutoLoan({ ...baseInput, vehicleYear: 2018 });
     expect(r.maxTermAllowed).toBe(72);
-    expect(r.minApr).toBe(8.99);
+    expect(r.minApr).toBe(7.99);
     expect(r.isBankFinancable).toBe(true);
     expect(r.financingTier).toBe('Prime');
   });
 
   // 2015-2017 are bank financable: 2026 contracts show National Bank funding a 2015 and a 2017,
   // and CIBC funding a 2016.
-  it('2017 vehicles: 60mo max, 8.99% min APR, Prime tier, 5% down', () => {
+  it('2017 vehicles: 60mo max, 8.49% min APR, Prime tier, 5% down', () => {
     const r = calculateAutoLoan({ ...baseInput, vehicleYear: 2017 });
     expect(r.maxTermAllowed).toBe(60);
-    expect(r.minApr).toBe(8.99);
+    expect(r.minApr).toBe(8.49);
     expect(r.isBankFinancable).toBe(true);
     expect(r.financingTier).toBe('Prime');
     expect(r.minDownPaymentRequired).toBe(Math.round(45000 * 0.05));
   });
 
-  it('2015-2016 vehicles: 48mo max, 9.99% min APR, Prime tier, 10% down', () => {
+  it('2016 vehicles: 48mo max, 8.99% min APR, Prime tier', () => {
+    const r = calculateAutoLoan({ ...baseInput, vehicleYear: 2016 });
+    expect(r.maxTermAllowed).toBe(48);
+    expect(r.minApr).toBe(8.99);
+    expect(r.isBankFinancable).toBe(true);
+  });
+
+  it('2015 vehicles: 48mo max, 9.59% min APR, Prime tier, 10% down', () => {
     const r = calculateAutoLoan({ ...baseInput, vehicleYear: 2015 });
     expect(r.maxTermAllowed).toBe(48);
-    expect(r.minApr).toBe(9.99);
+    expect(r.minApr).toBe(9.59);
     expect(r.isBankFinancable).toBe(true);
     expect(r.financingTier).toBe('Prime');
     expect(r.minDownPaymentRequired).toBe(Math.round(45000 * 0.10));
@@ -278,7 +285,7 @@ describe('calculateAutoLoan', () => {
 describe('reverseCalculateAutoLoan', () => {
   it('calculates max vehicle price from target bi-weekly payment', () => {
     const r = reverseCalculateAutoLoan({ targetBiWeeklyPayment: 500, targetMonthlyPayment: 0, vehicleYear: 2024, tradeInValue: 0, lienAmount: 0, downPayment: 0, termMonths: 84, licensingFee: 56 });
-    // Bounds reflect the 2023+ floor of 6.99% (no apr passed, so minApr is used).
+    // Bounds reflect the 2023+ floor of 6.95% (no apr passed, so minApr is used).
     expect(r.maxVehiclePrice).toBeGreaterThan(60000);
     expect(r.maxVehiclePrice).toBeLessThan(63000);
     expect(r.biWeeklyPayment).toBeCloseTo(500, 0);
@@ -635,8 +642,8 @@ describe('Desjardins reserve gating in calculateAutoLoan', () => {
 
   it('shows a reserve for a sheet rate and null for an off-sheet rate', () => {
     const promo = calculateAutoLoan({ ...baseInput, apr: 6.95 });
-    // ~$48k financed lands in the $40,000-$49,999 bracket: promo 6.95% reserve is 0.80%
-    expect(promo.desjardinsReservePct).toBe(0.8);
+    // ~$48k financed lands in the $40,000-$49,999 bracket: promo 6.95% reserve is 0.15%
+    expect(promo.desjardinsReservePct).toBe(0.15);
   });
 });
 

@@ -1,8 +1,11 @@
 /**
  * Desjardins AUTO financing Ontario — reserve-backed rate availability.
  *
- * Source: "Desjardins AUTO financing Ontario" rate sheet in effect from
- * September 8 to October 4, 2026 (DealerTrack ProgramId 23966, LenderId DSJ).
+ * Source: "Desjardins AUTO financing Ontario" rate sheet effective
+ * November 3, 2026, in effect to December 6, 2026 (DealerTrack ProgramId 24121,
+ * LenderId DSJ). Replaces the September 8 - October 4 sheet (ProgramId 23966):
+ * reserves were cut across the grid, the 7.45% promo is gone, and the 6.95%
+ * promo now covers 2023-2027 models on $30,000 and up.
  *
  * The sheet's reserve grid doubles as the quote-eligibility grid: where a
  * rate has no reserve for a financed-amount bracket (blank / "N/A" on the
@@ -56,18 +59,20 @@ export const RESERVE_BRACKETS: ReserveBracket[] = [
 
 // FIXED RATE - 2016 to 2027 ("RESERVES AND BONUS" grid)
 export const FIXED_RATE_ROWS: DesjardinsFixedRow[] = [
-  { baseApr: 7.99, extendedApr: 8.99, reserves: { b20000: 1.00, b25000: 1.15, b30000: 1.70, b40000: 2.40, b50000: 2.45, b75000: 2.50 } },
-  { baseApr: 8.49, extendedApr: 9.49, reserves: { b20000: 1.10, b25000: 1.30, b30000: 2.20, b40000: 2.60, b50000: 2.70, b75000: 2.75 } },
-  { baseApr: 8.99, extendedApr: 9.99, reserves: { b20000: 2.40, b25000: 3.00, b30000: 3.80, b40000: 3.90, b50000: 3.95 } },
-  { baseApr: 9.49, extendedApr: 10.49, reserves: { b7500: 0.75, b15000: 0.95, b20000: 2.50, b25000: 3.20, b30000: 3.90, b40000: 3.95 } },
-  { baseApr: 9.99, extendedApr: 10.99, reserves: { b7500: 1.25, b15000: 1.50, b20000: 2.75, b25000: 3.30, b30000: 3.95, b40000: 4.00 } },
+  { baseApr: 7.99, extendedApr: 8.99, reserves: { b20000: 0.45, b25000: 0.90, b30000: 1.60, b40000: 1.95, b50000: 2.05, b75000: 2.25 } },
+  { baseApr: 8.49, extendedApr: 9.49, reserves: { b20000: 0.75, b25000: 1.20, b30000: 1.75, b40000: 2.10, b50000: 2.25, b75000: 2.55 } },
+  { baseApr: 8.99, extendedApr: 9.99, reserves: { b20000: 1.25, b25000: 2.25, b30000: 2.50, b40000: 2.75, b50000: 2.90 } },
+  { baseApr: 9.49, extendedApr: 10.49, reserves: { b7500: 0.75, b15000: 0.90, b20000: 2.25, b25000: 3.25, b30000: 3.50, b40000: 3.75 } },
+  { baseApr: 9.99, extendedApr: 10.99, reserves: { b7500: 1.25, b15000: 1.50, b20000: 2.75, b25000: 3.50, b30000: 3.75, b40000: 3.95 } },
 ];
 
 // PROMO grid: minimum financed amount is the lowest bracket with a reserve
-// ($25,000 on the current sheet). Reserve column order: 25k / 30k / 40k / 50k / 75k+.
+// ($30,000 on the current sheet). Reserve column order: 30k / 40k / 50k / 75k+.
+// The sheet's electric-and-hybrid option is the same 6.95% on the same years with
+// slightly higher reserves (0.15 / 0.20 / 0.25 / 0.35); the calculator has no
+// powertrain input, so only the general promo is modelled.
 export const PROMO_RATE_ROWS: DesjardinsPromoRow[] = [
-  { apr: 6.95, minYear: 2021, maxYear: 2027, reserves: { b25000: 0.25, b30000: 0.75, b40000: 0.80, b50000: 0.85, b75000: 0.90 } },
-  { apr: 7.45, minYear: 2019, maxYear: 2027, reserves: { b25000: 0.50, b30000: 1.00, b40000: 1.10, b50000: 1.20, b75000: 1.30 } },
+  { apr: 6.95, minYear: 2023, maxYear: 2027, reserves: { b30000: 0.10, b40000: 0.15, b50000: 0.20, b75000: 0.30 } },
 ];
 
 // "2018 or older vehicles: a rate premium of 2%"
