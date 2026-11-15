@@ -39,6 +39,10 @@ const fmt = (n: number) => n.toLocaleString();
 
 const parseFormatted = (raw: string): number => Math.min(parseFloat(raw.replace(/,/g, '')) || 0, 99_999_999);
 
+/** Highest rate the field accepts. Far above any real loan, low enough to keep every figure readable. */
+const MAX_APR = 99.99;
+const parseApr = (raw: string): number => Math.min(Math.max(parseFloat(raw) || 0, 0), MAX_APR);
+
 interface FieldProps {
   label: string;
   note?: string;
@@ -121,7 +125,9 @@ const LoanInputs: React.FC<Props> = ({
         type="number"
         name="apr"
         value={inputs.apr}
-        onChange={(e) => onChange('apr', parseFloat(e.target.value) || 0)}
+        onChange={(e) => onChange('apr', parseApr(e.target.value))}
+        min={0}
+        max={MAX_APR}
         step="0.01"
       />
     </Field>
