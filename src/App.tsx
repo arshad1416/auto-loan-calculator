@@ -9,7 +9,7 @@ import ProvinceStrip from './components/ProvinceStrip';
 import LoanInputs from './components/LoanInputs';
 import LoanResults from './components/LoanResults';
 import AmortizationSchedule from './components/AmortizationSchedule';
-import VehicleListings from './components/VehicleListings';
+import MarketRead from './components/MarketRead';
 import RoadAhead from './components/RoadAhead';
 import LenderLimits from './components/LenderLimits';
 import Disclaimer from './components/Disclaimer';
@@ -140,15 +140,7 @@ const App: React.FC = () => {
           </div>
 
           {state.reverseMode && state.results.maxVehiclePrice > 0 && (
-            <VehicleListings
-              maxPrice={state.results.maxVehiclePrice}
-              provinceCode={state.inputs.provinceCode || 'ON'}
-              vehicleCondition={state.inputs.vehicleCondition || 'used'}
-              vehicleYear={state.inputs.vehicleYear}
-              downPayment={state.inputs.downPayment}
-              apr={state.inputs.apr}
-              termMonths={state.inputs.termMonths}
-            />
+            <MarketRead maxPrice={state.results.maxVehiclePrice} provinceCode={state.inputs.provinceCode || 'ON'} />
           )}
 
           <AmortizationSchedule
