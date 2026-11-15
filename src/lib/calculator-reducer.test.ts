@@ -44,7 +44,7 @@ describe('calculatorReducer — Desjardins-backed rate seeding and insurance', (
   it('forward SET_YEAR: falls back to the CARF guideline when no rate is backed (price 0)', () => {
     const state = makeState({ vehiclePrice: 0 });
     const next = calculatorReducer(state, { type: 'SET_YEAR', year: 2024 });
-    expect(next.inputs.apr).toBe(6.99);
+    expect(next.inputs.apr).toBe(6.95);
   });
 
   it('reverse SET_YEAR keeps the user rate (minApr is advisory, not a floor)', () => {

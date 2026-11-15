@@ -1,7 +1,9 @@
 /**
  * Auto Loan Calculator Logic
  * Factors in Ontario-specific taxes (HST 13%), OMVIC fees, lender admin fees, and dealer admin fees.
- * Financing rules sourced from Canadian lender guidelines (June 2026).
+ * Financing rules sourced from Canadian lender guidelines. Rates, terms and conditions last
+ * re-checked 2026-11-15 against current lender rate sheets and booking guides (effective Mar-Nov 2026)
+ * and the 20 most recent funded contracts.
  */
 
 import { availableDesjardinsRates, desjardinsReserveFor, desjardinsMaxTerm, type AvailableRate } from './desjardins';
@@ -138,7 +140,8 @@ export function getYearRules(vehicleYear: number, vehicleCondition?: VehicleCond
 
   // New / low-km vehicles: 2024-2026
   if (vehicleCondition === 'new' && vehicleYear >= 2024 && vehicleYear <= currentYear) {
-    return { maxTermAllowed: 96, minApr: 6.99, isBankFinancable: true, financingTier: 'Prime', minDownPaymentPct: 0 };
+    // 6.95%: promotional fixed rate for 2023-2027 models, up to 96 months (prime rate sheet eff. 2026-11-03).
+    return { maxTermAllowed: 96, minApr: 6.95, isBankFinancable: true, financingTier: 'Prime', minDownPaymentPct: 0 };
   }
 
   // Used 2023-2026 — 96mo: CIBC Auto Finance publishes up to 96 months on new OR used through the
@@ -148,12 +151,14 @@ export function getYearRules(vehicleYear: number, vehicleCondition?: VehicleCond
   // placements. Because the reducer snaps term to this maximum on a year change, 96 also becomes the
   // default quote for a 2023+ — see calculator-reducer SET_YEAR.
   if (vehicleYear >= 2023) {
-    return { maxTermAllowed: 96, minApr: 6.99, isBankFinancable: true, financingTier: 'Prime', minDownPaymentPct: 0 };
+    // 6.95%: promotional fixed rate for 2023-2027 models, up to 96 months (prime rate sheet eff. 2026-11-03).
+    return { maxTermAllowed: 96, minApr: 6.95, isBankFinancable: true, financingTier: 'Prime', minDownPaymentPct: 0 };
   }
 
   // 2021-2022
   if (vehicleYear >= 2021) {
-    return { maxTermAllowed: 84, minApr: 7.99, isBankFinancable: true, financingTier: 'Prime', minDownPaymentPct: 0 };
+    // 6.99%: two 2021 units funded at 6.99% in Sep 2026 (one at 188,000 km).
+    return { maxTermAllowed: 84, minApr: 6.99, isBankFinancable: true, financingTier: 'Prime', minDownPaymentPct: 0 };
   }
 
   // 2019-2020 — 7.99% observed on National Bank contracts (2026)
@@ -166,22 +171,32 @@ export function getYearRules(vehicleYear: number, vehicleCondition?: VehicleCond
   if (vehicleYear >= 2018) {
     // 72: a 2018 was written at 72 months by Northlake, and Northlake's Apr-2026 booking
     // guide still allows 72 on a 2018 Extra Clean (0-100,000 km).
-    return { maxTermAllowed: 72, minApr: 8.99, isBankFinancable: true, financingTier: 'Prime', minDownPaymentPct: 0 };
+    // 7.99%: a 2018 funded at 7.99% in Sep 2026. 72 months still holds on the Apr-2026 booking guide
+    // (2018, up to 100,000 km).
+    return { maxTermAllowed: 72, minApr: 7.99, isBankFinancable: true, financingTier: 'Prime', minDownPaymentPct: 0 };
   }
 
   // 2017 — bank financable: National Bank funded a 2017 at 8.99% (2026)
   if (vehicleYear >= 2017) {
     // 60: Northlake (Apr 2026) and iA (May 2025) both cap a 2017 at 60 months on Clean.
     // Bank financable: National Bank funded a 2017 at 8.99% (2026 contract).
-    return { maxTermAllowed: 60, minApr: 8.99, isBankFinancable: true, financingTier: 'Prime', minDownPaymentPct: 0.05 };
+    // 8.49%: a 2017 funded at 8.49% in Oct 2026.
+    return { maxTermAllowed: 60, minApr: 8.49, isBankFinancable: true, financingTier: 'Prime', minDownPaymentPct: 0.05 };
   }
 
   // 2015-2016 — bank financable: National Bank (2015) and CIBC (2016) both funded (2026).
+  // 2016 — 8.99%: a 2016 funded at 8.99% in Nov 2026 (244,000 km, 36 months). 48 months is the
+  // longest on the current booking guides (up to 140,000 km).
+  if (vehicleYear >= 2016) {
+    return { maxTermAllowed: 48, minApr: 8.99, isBankFinancable: true, financingTier: 'Prime', minDownPaymentPct: 0.10 };
+  }
+
+  // 2015 — 9.59%: lowest 2015 funded in 2026 (Aug, 36 months); others at 9.99% and 11.49%.
   if (vehicleYear >= 2015) {
     // 48: Northlake (Apr 2026) and iA (May 2025) both allow 48 on a 2015/2016 Clean.
     // 9.99% observed on both the 2015 (National Bank) and 2016 (CIBC) contracts.
     // Bank financable: National Bank funded a 2015, CIBC funded a 2016 (2026 contracts).
-    return { maxTermAllowed: 48, minApr: 9.99, isBankFinancable: true, financingTier: 'Prime', minDownPaymentPct: 0.10 };
+    return { maxTermAllowed: 48, minApr: 9.59, isBankFinancable: true, financingTier: 'Prime', minDownPaymentPct: 0.10 };
   }
 
   // 2012-2014 — 42mo: Quantifi's Vintage grid (2011-2015 Clean, <=125,000 km) allows 42, and a live
