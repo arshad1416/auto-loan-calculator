@@ -1,5 +1,7 @@
 import type { CalculationInput, CalculationResult } from '../lib/calculator';
 import { PROVINCES } from '../lib/calculator';
+import DotMatrix from './DotMatrix';
+import { LimitSign } from './Signs';
 
 interface Props {
   inputs: CalculationInput;
@@ -12,171 +14,133 @@ interface Props {
 const fmt = (n: number, decimals = 2) =>
   n.toLocaleString(undefined, { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
 
+const whole = (n: number) => n.toLocaleString(undefined, { maximumFractionDigits: 0 });
+
+/** Narrowest board the headline figure sits on; longer figures widen it. */
+const MIN_BOARD_COLS = 9;
+
+const TIER_TONE: Record<string, string> = { Prime: 'green', Limited: 'yellow' };
+
 const LoanResults: React.FC<Props> = ({ inputs, results, reverseMode, targetBiWeeklyPayment, targetMonthlyPayment }) => {
-  const selectedProv = PROVINCES.find(p => p.code === (inputs.provinceCode || 'ON')) || PROVINCES[0];
+  const selectedProv = PROVINCES.find((p) => p.code === (inputs.provinceCode || 'ON')) || PROVINCES[0];
+
+  const headline = reverseMode ? `$${whole(results.maxVehiclePrice)}` : `$${fmt(results.biWeeklyPayment)}`;
+  const headlineLabel = reverseMode ? 'Max vehicle price, before tax' : 'Bi-weekly payment';
+
+  const included = [
+    `$${results.licensingFee.toLocaleString()} licensing`,
+    selectedProv.regulatingFee > 0 && `$${selectedProv.regulatingFee} ${selectedProv.regulatingFeeName}`,
+    results.lenderAdminFee > 0 && `$${results.lenderAdminFee.toLocaleString()} lender admin`,
+    results.dealerAdminFee > 0 && `$${results.dealerAdminFee.toLocaleString()} dealer admin`,
+    results.ppsaFee > 0 && `$${results.ppsaFee.toLocaleString()} PPSA (approx.)`,
+    results.warranty > 0 && `$${results.warranty.toLocaleString()} warranty`,
+    results.safetyCertification > 0 && `$${results.safetyCertification.toLocaleString()} safety cert`,
+    results.otherFees > 0 && `$${results.otherFees.toLocaleString()} other fees`,
+  ].filter(Boolean);
 
   return (
-    <div className="glass-panel" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-      <div className="hero-payment">
-        {reverseMode ? (
-          <>
-            <div className="payment-label">Max Vehicle Price (Pre-Tax)</div>
-            <div className="payment-amount" style={{ fontSize: '3.5rem' }}>
-              ${results.maxVehiclePrice.toLocaleString(undefined, { maximumFractionDigits: 0 })}
-            </div>
-            <div style={{ marginTop: '1.5rem', paddingTop: '1.5rem', borderTop: '1px solid var(--panel-border)', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-              <div>
-                <div className="payment-label" style={{ fontSize: '0.75rem' }}>Bi-Weekly Budget</div>
-                <div className="payment-amount" style={{ fontSize: '1.5rem' }}>
-                  ${targetBiWeeklyPayment.toLocaleString()}
-                </div>
-              </div>
-              <div>
-                <div className="payment-label" style={{ fontSize: '0.75rem' }}>Monthly Budget</div>
-                <div className="payment-amount" style={{ fontSize: '1.5rem' }}>
-                  ${targetMonthlyPayment.toLocaleString()}
-                </div>
-              </div>
-            </div>
-          </>
-        ) : (
-          <>
-            <div className="payment-label">Bi-Weekly Payment</div>
-            <div className="payment-amount">
-              ${fmt(results.biWeeklyPayment)}
-            </div>
+    <aside className="board" aria-label="Results">
+      <div className="board__display">
+        <div className="board__label">{headlineLabel}</div>
+        <div className="vms vms--headline">
+          <DotMatrix lines={[headline]} cols={Math.max(MIN_BOARD_COLS, headline.length)} wipeMs={380} />
+        </div>
+        <p className="sr-only" aria-live="polite" data-testid="headline-figure">
+          {headlineLabel}: {headline}
+        </p>
 
-            <div style={{ marginTop: '1.5rem', paddingTop: '1.5rem', borderTop: '1px solid var(--panel-border)' }}>
-              <div className="payment-label" style={{ fontSize: '1rem' }}>Monthly Payment</div>
-              <div className="payment-amount" style={{ fontSize: '2.5rem' }}>
-                ${fmt(results.monthlyPayment)}
+        <dl className="board__pair">
+          {reverseMode ? (
+            <>
+              <div>
+                <dt>Bi-weekly budget</dt>
+                <dd>${targetBiWeeklyPayment.toLocaleString()}</dd>
               </div>
-            </div>
-          </>
-        )}
+              <div>
+                <dt>Monthly budget</dt>
+                <dd>${targetMonthlyPayment.toLocaleString()}</dd>
+              </div>
+            </>
+          ) : (
+            <>
+              <div>
+                <dt>Monthly payment</dt>
+                <dd data-testid="monthly-payment">${fmt(results.monthlyPayment)}</dd>
+              </div>
+              <div>
+                <dt>Term and rate</dt>
+                <dd>{inputs.termMonths} mo at {inputs.apr}%</dd>
+              </div>
+            </>
+          )}
+        </dl>
       </div>
 
-      {/* Financial Metrics */}
-      <div className="metrics-grid">
-        {/* Row 1: Loan Term + Condition */}
-        <div className="metrics-row">
-          <div className="metric">
-            <label>Loan Term</label>
-            <div className="metric-value">
-              {inputs.termMonths} mo <span style={{ color: 'var(--text-secondary)', fontWeight: 400 }}>({Math.round(inputs.termMonths / 12)} yr)</span>
-            </div>
-            <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>@ {inputs.apr}% Interest Rate</div>
-          </div>
-          <div className="metric">
-            <label>Condition</label>
-            <div className="metric-value" style={{ textTransform: 'capitalize' }}>{inputs.vehicleCondition || 'used'}</div>
-          </div>
+      <div className="board__signs">
+        <LimitSign caption={['Maximum', 'term']} value={results.maxTermAllowed} unit="months" />
+        <LimitSign caption={['Rate', 'floor']} value={results.minApr} unit="percent" compact />
+        <div className={`sign sign--tier sign--${TIER_TONE[results.financingTier] ?? 'orange'} retro`}>
+          <span className="sign__caption">Financing tier</span>
+          <span className="sign__tier">{results.financingTier}</span>
+          <span className="sign__caption">
+            {results.isBankFinancable ? 'Bank financeable' : 'Specialty lenders only'}
+          </span>
         </div>
+      </div>
 
-        {/* Row 1b: Financing Tier + Max Term */}
-        <div className="metrics-row">
-          <div className="metric">
-            <label>Financing Tier</label>
-            <div className="metric-value" style={{
-              color: results.financingTier === 'Prime' ? '#34a853' :
-                     results.financingTier === 'Limited' ? '#fbbf24' : '#ea4335',
-              fontWeight: 600,
-            }}>
-              {results.financingTier}
-            </div>
-            <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>
-              {results.isBankFinancable ? 'Bank financeable' : results.financingTier === 'Specialty only' ? 'Specialty lender only' : 'Limited availability'}
-            </div>
-          </div>
-          <div className="metric">
-            <label>Max Term Allowed</label>
-            <div className="metric-value">{results.maxTermAllowed} mo</div>
-            <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>CARF guideline min: {results.minApr}%</div>
-          </div>
-        </div>
-
-        {/* Row 2: Sales Tax + Amount Financed */}
-        <div className="metrics-row">
-          <div className="metric">
-            <label>Sales Tax ({selectedProv.taxType})</label>
-            <div className="metric-value">${fmt(results.hst)}</div>
+      <dl className="ledger">
+        <div>
+          <dt>Sales tax ({selectedProv.taxType})</dt>
+          <dd>
+            ${fmt(results.hst)}
             {selectedProv.taxType === 'GST+PST' && (
-              <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', marginTop: '0.15rem' }}>
-                GST: ${fmt(results.gst || 0)} &nbsp; PST: ${fmt(results.pst || 0)}
-              </div>
+              <small>GST ${fmt(results.gst || 0)} · PST ${fmt(results.pst || 0)}</small>
             )}
-            {selectedProv.taxType === 'GST' && (
-              <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', marginTop: '0.15rem' }}>
-                GST (5%): ${fmt(results.gst || 0)}
-              </div>
-            )}
+            {selectedProv.taxType === 'GST' && <small>GST at 5%: ${fmt(results.gst || 0)}</small>}
             {results.luxuryTax !== undefined && results.luxuryTax > 0 && (
-              <div style={{ fontSize: '0.7rem', color: '#fbbf24', marginTop: '0.25rem', fontWeight: 600 }}>
-                ● Luxury Tax: ${fmt(results.luxuryTax)}
-              </div>
+              <small className="ledger__flag">Luxury tax: ${fmt(results.luxuryTax)}</small>
             )}
             {results.insuranceProducts > 0 && (
-              <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', marginTop: '0.15rem' }}>
+              <small>
                 {results.provinceCode === 'QC'
-                  ? <>Incl. 9% QST on insurance (${fmt(Math.round(results.insuranceTax))})</>
-                  : <>Insurance ${fmt(results.insuranceProducts)} — tax-exempt</>}
-              </div>
+                  ? `Includes 9% QST on insurance ($${fmt(Math.round(results.insuranceTax))})`
+                  : `Insurance $${fmt(results.insuranceProducts)} is tax exempt`}
+              </small>
             )}
-          </div>
-          <div className="metric">
-            <label>Amount Financed</label>
-            <div className="metric-value">${results.loanPrincipal.toLocaleString(undefined, { maximumFractionDigits: 0 })}</div>
-          </div>
+          </dd>
         </div>
-
-        {/* Row 3: Total Loan Cost + Total Interest */}
-        <div className="metrics-row">
-          <div className="metric">
-            <label>Total Loan Cost</label>
-            <div className="metric-value">${results.totalCost.toLocaleString(undefined, { maximumFractionDigits: 0 })}</div>
-          </div>
-          <div className="metric">
-            <label>Total Interest</label>
-            <div className="metric-value" style={{ color: 'var(--success-color)' }}>
-              ${results.totalInterest.toLocaleString(undefined, { maximumFractionDigits: 0 })}
-            </div>
-          </div>
+        <div>
+          <dt>Amount financed</dt>
+          <dd>${whole(results.loanPrincipal)}</dd>
         </div>
-      </div>
+        <div>
+          <dt>Total interest</dt>
+          <dd>${whole(results.totalInterest)}</dd>
+        </div>
+        <div>
+          <dt>Total loan cost</dt>
+          <dd>${whole(results.totalCost)}</dd>
+        </div>
+        <div>
+          <dt>Condition</dt>
+          <dd className="ledger__word">{inputs.vehicleCondition || 'used'}</dd>
+        </div>
+      </dl>
 
       {(results.financedNegativeEquity > 0 || results.excessNegativeEquity > 0) && (
-        <div style={{
-          padding: '0.75rem 1rem',
-          background: results.excessNegativeEquity > 0 ? 'rgba(234, 67, 53, 0.08)' : 'rgba(52, 168, 83, 0.06)',
-          borderRadius: '8px',
-          fontSize: '0.8rem',
-          color: 'var(--text-secondary)',
-          lineHeight: '1.5',
-        }}>
-          <div style={{ fontWeight: '600', color: results.excessNegativeEquity > 0 ? 'var(--error-color)' : 'var(--text-primary)', marginBottom: '0.25rem' }}>
-            Negative Equity (Lien − Trade-In)
-          </div>
-          ${results.financedNegativeEquity.toLocaleString()} rolled into financing
+        <div className={`notice${results.excessNegativeEquity > 0 ? ' notice--over' : ''}`}>
+          <strong>Negative equity (lien minus trade-in)</strong>
+          <span>${results.financedNegativeEquity.toLocaleString()} rolled into financing.</span>
           {results.excessNegativeEquity > 0 && (
-            <div style={{ color: 'var(--error-color)', marginTop: '0.25rem' }}>
-              ${results.excessNegativeEquity.toLocaleString()} exceeds 40% cap — added to minimum down payment
-            </div>
+            <span>
+              ${results.excessNegativeEquity.toLocaleString()} is past the 40% cap and has been added to the minimum down payment.
+            </span>
           )}
         </div>
       )}
 
-      <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', textAlign: 'center', opacity: 0.7 }}>
-        Includes ${results.licensingFee.toLocaleString()} Licensing
-        {selectedProv.regulatingFee > 0 && `, $${selectedProv.regulatingFee} ${selectedProv.regulatingFeeName}`}
-        {results.lenderAdminFee > 0 && `, $${results.lenderAdminFee.toLocaleString()} Lender Admin`}
-        {results.dealerAdminFee > 0 && `, $${results.dealerAdminFee.toLocaleString()} Dealer Admin`}
-        {results.ppsaFee > 0 && `, $${results.ppsaFee.toLocaleString()} PPSA (approx.)`}
-        {results.warranty > 0 && `, $${results.warranty.toLocaleString()} Warranty`}
-        {results.safetyCertification > 0 && `, $${results.safetyCertification.toLocaleString()} Safety Cert`}
-        {results.otherFees > 0 && `, $${results.otherFees.toLocaleString()} Other Fees`}
-        .
-      </div>
-    </div>
+      <p className="board__included">Includes {included.join(', ')}.</p>
+    </aside>
   );
 };
 

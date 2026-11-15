@@ -106,161 +106,101 @@ const VehicleListings: React.FC<Props> = ({ maxPrice, provinceCode, vehicleCondi
   };
 
   return (
-    <div className="glass-panel" style={{ marginTop: '2rem' }}>
+    <section className="listings" aria-label="Vehicles within budget">
       {state.status === 'idle' && (
-        <div style={{ textAlign: 'center', padding: '1.5rem' }}>
-          <button
-            className="mode-toggle active"
-            onClick={fetchListings}
-            style={{ padding: '0.75rem 2rem', fontSize: '0.95rem', cursor: 'pointer' }}
-          >
-            Find Matching Vehicles
+        <div className="listings__prompt">
+          <button type="button" className="btn-exit" onClick={fetchListings}>
+            Find vehicles in this budget
           </button>
-          <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginTop: '0.75rem' }}>
-            Searches AutoTrader &amp; CarGurus for vehicles matching your budget
-          </div>
+          <p>Searches AutoTrader and CarGurus for vehicles at or under your max price.</p>
         </div>
       )}
 
       {state.status === 'loading' && (
-        <div style={{ textAlign: 'center', padding: '2rem' }}>
+        <div className="listings__prompt">
           <div className="spinner" role="status" aria-label="Searching listings" />
-          <div style={{ color: 'var(--text-secondary)', marginTop: '0.75rem' }}>
-            Searching AutoTrader &amp; CarGurus...
-          </div>
+          <p>Searching AutoTrader and CarGurus…</p>
         </div>
       )}
 
       {(state.status === 'loaded' || (state.status === 'error' && state.fallback)) && (() => {
-          const raw = state.status === 'loaded' ? state.data.results : state.fallback!.results;
-          const inBudget = raw.filter((v) => v.price <= maxPrice);
+        const raw = state.status === 'loaded' ? state.data.results : state.fallback!.results;
+        const inBudget = raw.filter((v) => v.price <= maxPrice);
 
-          return (
-        <>
-          <div style={{
-            display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-            padding: '0.75rem 0', marginBottom: '0.75rem',
-            borderBottom: '1px solid var(--panel-border)',
-          }}>
-            <div style={{ fontWeight: 700 }}>
-              {inBudget.length} Vehicles Within Budget
-            </div>
-            <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
-              {state.status === 'loaded'
-                ? state.data.cached ? 'From cache' : 'Live results'
-                : 'From cache'}
-            </div>
-          </div>
+        return (
+          <>
+            <header className="listings__head">
+              <h3>{inBudget.length} vehicles within budget</h3>
+              <span>
+                {state.status === 'loaded' && !state.data.cached ? 'Live results' : 'From cache'}
+              </span>
+            </header>
 
-          {state.status === 'error' && (
-            <div style={{
-              padding: '0.5rem 0.75rem', marginBottom: '0.75rem',
-              background: 'rgba(255, 133, 0, 0.08)', borderRadius: '8px',
-              fontSize: '0.8rem', color: '#f59e0b',
-            }}>
-              {state.message}
-            </div>
-          )}
+            {state.status === 'error' && <p className="notice">{state.message}</p>}
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-            {inBudget
-              .slice(0, showAll ? undefined : 5)
-              .map((v) => {
-                const rules = getYearRules(v.year || vehicleYear);
-                const payment = calculateAutoLoan({
-                  vehicleYear: v.year || vehicleYear,
-                  vehiclePrice: v.price,
-                  tradeInValue: 0,
-                  lienAmount: 0,
-                  downPayment,
-                  apr,
-                  termMonths: Math.min(termMonths, rules.maxTermAllowed),
-                  licensingFee: 0,
-                  provinceCode: provinceCode || 'ON',
-                  vehicleCondition: (v.condition as VehicleCondition) || vehicleCondition || 'used',
-                });
+            <ul className="listings__list">
+              {inBudget
+                .slice(0, showAll ? undefined : 5)
+                .map((v) => {
+                  const rules = getYearRules(v.year || vehicleYear);
+                  const payment = calculateAutoLoan({
+                    vehicleYear: v.year || vehicleYear,
+                    vehiclePrice: v.price,
+                    tradeInValue: 0,
+                    lienAmount: 0,
+                    downPayment,
+                    apr,
+                    termMonths: Math.min(termMonths, rules.maxTermAllowed),
+                    licensingFee: 0,
+                    provinceCode: provinceCode || 'ON',
+                    vehicleCondition: (v.condition as VehicleCondition) || vehicleCondition || 'used',
+                  });
 
-                return (
-              <a
-                key={v.url}
-                href={safeUrl(v.url)}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="listing-card"
-                style={{
-                  display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-                  padding: '0.75rem 1rem', border: '1px solid var(--panel-border)',
-                  borderRadius: '10px', textDecoration: 'none', color: 'inherit',
-                  transition: 'border-color 0.2s',
-                }}
-              >
-                <div>
-                  <div style={{ fontWeight: 700 }}>
-                    {v.year} {v.make} {v.model}
-                  </div>
-                  <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
-                    {fmtMileage(v.mileage)} · {v.dealership}, {v.city}
-                  </div>
-                  <div style={{ fontSize: '0.75rem', color: 'var(--accent-color)', marginTop: '0.25rem' }}>
-                    Est. ${Math.round(payment.biWeeklyPayment).toLocaleString()}/bi-wk · ${Math.round(payment.monthlyPayment).toLocaleString()}/mo
-                  </div>
-                </div>
-                <div style={{ textAlign: 'right' }}>
-                  <div style={{ fontWeight: 700, color: 'var(--success-color)' }}>
-                    ${v.price.toLocaleString()}
-                  </div>
-                </div>
-              </a>
-                );
-              })}
-          </div>
+                  return (
+                    <li key={v.url}>
+                      <a href={safeUrl(v.url)} target="_blank" rel="noopener noreferrer" className="listing">
+                        <span className="listing__body">
+                          <strong>{v.year} {v.make} {v.model}</strong>
+                          <span>{fmtMileage(v.mileage)} · {v.dealership}, {v.city}</span>
+                          <span className="listing__payment">
+                            Est. ${Math.round(payment.biWeeklyPayment).toLocaleString()} bi-weekly · ${Math.round(payment.monthlyPayment).toLocaleString()} monthly
+                          </span>
+                        </span>
+                        <span className="listing__price">${v.price.toLocaleString()}</span>
+                      </a>
+                    </li>
+                  );
+                })}
+            </ul>
 
-          {inBudget.length > 5 && !showAll && (
-            <div style={{ textAlign: 'center', padding: '0.75rem' }}>
-              <button
-                className="mode-toggle"
-                onClick={() => setShowAll(true)}
-                style={{ padding: '0.5rem 2rem', cursor: 'pointer', fontSize: '0.85rem' }}
-              >
+            {inBudget.length > 5 && !showAll && (
+              <button type="button" className="btn-line" onClick={() => setShowAll(true)}>
                 Show all {inBudget.length} listings
               </button>
-            </div>
-          )}
-        </>
-          );
-        })()}
+            )}
+          </>
+        );
+      })()}
 
       {state.status === 'empty' && (
-        <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-secondary)' }}>
-          <div style={{ fontWeight: 600, marginBottom: '0.5rem' }}>No matching vehicles found</div>
-          <div style={{ fontSize: '0.85rem' }}>
-            Try expanding your year range or increasing your budget.
-          </div>
-          <button
-            className="mode-toggle"
-            onClick={() => setState({ status: 'idle' })}
-            style={{ marginTop: '1rem', padding: '0.5rem 1.5rem', cursor: 'pointer' }}
-          >
-            Try Again
+        <div className="listings__prompt">
+          <strong>No matching vehicles found</strong>
+          <p>Try a wider year range or a higher budget.</p>
+          <button type="button" className="btn-line" onClick={() => setState({ status: 'idle' })}>
+            Try again
           </button>
         </div>
       )}
 
       {state.status === 'error' && !state.fallback && (
-        <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-secondary)' }}>
-          <div style={{ fontWeight: 600, marginBottom: '0.5rem', color: 'var(--error-color)' }}>
-            {state.message}
-          </div>
-          <button
-            className="mode-toggle"
-            onClick={() => setState({ status: 'idle' })}
-            style={{ marginTop: '1rem', padding: '0.5rem 1.5rem', cursor: 'pointer' }}
-          >
+        <div className="listings__prompt">
+          <strong className="listings__error">{state.message}</strong>
+          <button type="button" className="btn-line" onClick={() => setState({ status: 'idle' })}>
             Retry
           </button>
         </div>
       )}
-    </div>
+    </section>
   );
 };
 
