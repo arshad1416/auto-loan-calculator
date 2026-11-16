@@ -1,7 +1,7 @@
 import { tidy } from '../lib/money';
 import { useEffect, useState } from 'react';
 import type { CalculationInput, CalculationResult, VehicleCondition } from '../lib/calculator';
-import { PROVINCES } from '../lib/calculator';
+import { PROVINCES, SUBPRIME_APR } from '../lib/calculator';
 
 interface Props {
   inputs: CalculationInput;
@@ -13,6 +13,7 @@ interface Props {
   onCommitDownPayment: () => void;
   downPaymentRaised: boolean;
   onYearChange: (year: number) => void;
+  onSubprimeChange: (value: boolean) => void;
   onToggleMode: () => void;
   onTargetBiWeeklyChange: (value: number) => void;
   onTargetMonthlyChange: (value: number) => void;
@@ -89,7 +90,7 @@ const MoneyInput: React.FC<{ name: string; value: number; onChange: (value: numb
 const LoanInputs: React.FC<Props> = ({
   inputs, results, reverseMode,
   targetBiWeeklyPayment, targetMonthlyPayment,
-  onChange, onCommitDownPayment, downPaymentRaised, onYearChange, onToggleMode,
+  onChange, onCommitDownPayment, downPaymentRaised, onYearChange, onSubprimeChange, onToggleMode,
   onTargetBiWeeklyChange, onTargetMonthlyChange,
   onReset,
 }) => {
@@ -155,6 +156,24 @@ const LoanInputs: React.FC<Props> = ({
         <span>{results.maxTermAllowed} mo max ({termYearsLabel(results.maxTermAllowed)})</span>
       </span>
     </Field>
+  );
+
+  // Only offered where a subprime placement reaches past the prime lender's limit (2016-2020 in ON).
+  const subprimeField = results.subprimeAvailable && (
+    <label className="field field--wide check">
+      <input
+        type="checkbox"
+        name="acceptsSubprime"
+        checked={!!inputs.acceptsSubprime}
+        onChange={(e) => onSubprimeChange(e.target.checked)}
+      />
+      <span>
+        <span className="check__label">Customer accepts subprime for a longer term</span>
+        <span className="field__note">
+          {`Up to ${results.subprimeMaxTerm} months at ${SUBPRIME_APR}% or more, instead of ${results.primeMaxTerm} months at prime rates.`}
+        </span>
+      </span>
+    </label>
   );
 
   const plainMoney = (label: string, field: keyof CalculationInput, className?: string) => (
@@ -242,6 +261,7 @@ const LoanInputs: React.FC<Props> = ({
             </>
           )}
           {termField}
+          {subprimeField}
         </div>
       </fieldset>
 

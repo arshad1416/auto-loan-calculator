@@ -125,6 +125,7 @@ const App: React.FC = () => {
               onCommitDownPayment={() => dispatch({ type: 'COMMIT_DOWN_PAYMENT' })}
               downPaymentRaised={state.downPaymentRaised}
               onYearChange={(year) => dispatch({ type: 'SET_YEAR', year })}
+              onSubprimeChange={(value) => dispatch({ type: 'SET_SUBPRIME', value })}
               onToggleMode={() => dispatch({ type: 'TOGGLE_MODE' })}
               onTargetBiWeeklyChange={(value) => dispatch({ type: 'SET_TARGET_BIWEEKLY', value })}
               onTargetMonthlyChange={(value) => dispatch({ type: 'SET_TARGET_MONTHLY', value })}
