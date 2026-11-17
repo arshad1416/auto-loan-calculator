@@ -38,6 +38,8 @@ export interface CalculationInput {
   otherFees?: number;
   /** Optional insurance products (GAP / Life / A&H) financed on the deal */
   insuranceProducts?: number;
+  /** Customer accepts a subprime rate in exchange for a term past the prime lender's limit */
+  acceptsSubprime?: boolean;
 }
 
 export interface CalculationResult {
@@ -79,6 +81,16 @@ export interface CalculationResult {
   desjardinsReservePct: number | null;
   /** Desjardins sheet amortization cap for this year (0 = Desjardins not applicable) */
   desjardinsMaxTerm: number;
+  /** True when a subprime placement allows a longer term than the prime limit for this deal */
+  subprimeAvailable: boolean;
+  /** Longest term on prime placement (equals maxTermAllowed while subprime is off) */
+  primeMaxTerm: number;
+  /** Longest term when the customer accepts subprime (0 when no subprime extension exists) */
+  subprimeMaxTerm: number;
+  /** True when the quote is on the subprime extension (accepted and available) */
+  isSubprime: boolean;
+  /** Starting subprime rate for this model year */
+  subprimeApr: number;
 }
 
 /** Rounds a dollar amount to the nearest cent. */
@@ -129,6 +141,62 @@ export const getBcPstRate = (price: number): number => {
   if (price < 150000) return 0.15;
   return 0.20;
 };
+
+/**
+ * Subprime longer-term option.
+ *
+ * In ON the prime lender (Desjardins) caps the term by model year (desjardinsMaxTerm). A customer
+ * who accepts a subprime rate can go to the longest term any subprime lender on the panel books for
+ * that model year. Source: year x condition-grade booking guides in the lender policy library
+ * (AutoCapital eff. 2026-04-03, EdenPark 2026 Ride eff. 2026-07-01, Quantifi National,
+ * Santander Tier 2026-04). Longest term across lenders and grades, i.e. a low-mileage unit; heavier
+ * mileage books shorter. Every subprime sheet caps at 84 months.
+ */
+export const SUBPRIME_MIN_YEAR = 2016;
+export const SUBPRIME_MAX_TERM = 84;
+
+/** Longest subprime term for a model year (0 = not offered). */
+export function subprimeMaxTermForYear(vehicleYear: number): number {
+  if (vehicleYear >= 2021) return SUBPRIME_MAX_TERM; // all four lenders: 84 (Extra Clean / Clean)
+  if (vehicleYear >= 2019) return 78; // 2020: ACC/EP/QLI/SAN Extra Clean 78; 2019: QLI Extra Clean 78
+  if (vehicleYear === 2018) return 60; // QLI Clean 60 (Santander 54, ACC/EP 48)
+  if (vehicleYear === 2017) return 48; // EP/QLI Clean 48 (Santander 42, ACC 36)
+  if (vehicleYear === SUBPRIME_MIN_YEAR) return 60; // owner's figure, 2026-11-16 (sheets on file: QLI 42, EP 36)
+  return 0;
+}
+// Starting subprime rate for every eligible year: owner's figure (2026-11-16).
+export const SUBPRIME_APR = 12.9;
+
+export interface TermLimits {
+  maxTermAllowed: number;
+  primeMaxTerm: number;
+  subprimeMaxTerm: number;
+  subprimeAvailable: boolean;
+  isSubprime: boolean;
+}
+
+export function getTermLimits(
+  vehicleYear: number,
+  vehicleCondition: VehicleCondition | undefined,
+  provinceCode: string | undefined,
+  acceptsSubprime: boolean | undefined,
+): TermLimits {
+  const panelMax = getYearRules(vehicleYear, vehicleCondition).maxTermAllowed;
+  const primeCap = (provinceCode || 'ON') === 'ON' ? desjardinsMaxTerm(vehicleYear) : 0;
+  const subprimeTerm = subprimeMaxTermForYear(vehicleYear);
+  const subprimeAvailable = primeCap > 0 && subprimeTerm > primeCap;
+  // With the option offered, prime placement means the prime lender's own limit.
+  const primeMaxTerm = subprimeAvailable ? Math.min(panelMax, primeCap) : panelMax;
+  const subprimeMaxTerm = subprimeAvailable ? subprimeTerm : 0;
+  const isSubprime = !!acceptsSubprime && subprimeAvailable;
+  return {
+    maxTermAllowed: isSubprime ? subprimeMaxTerm : primeMaxTerm,
+    primeMaxTerm,
+    subprimeMaxTerm,
+    subprimeAvailable,
+    isSubprime,
+  };
+}
 
 interface YearRules {
   maxTermAllowed: number;
@@ -188,10 +256,10 @@ export function getYearRules(vehicleYear: number, vehicleCondition?: VehicleCond
   }
 
   // 2015-2016 — bank financable: National Bank (2015) and CIBC (2016) both funded (2026).
-  // 2016 — 8.99%: a 2016 funded at 8.99% in Nov 2026 (244,000 km, 36 months). 48 months is the
+  // 2016 — 9.99% quoted to be safe (owner, 2026-11-16), though a 2016 funded at 8.99% in Nov 2026 (244,000 km, 36 months). 48 months is the
   // longest on the current booking guides (up to 140,000 km).
   if (vehicleYear >= 2016) {
-    return { maxTermAllowed: 48, minApr: 8.99, isBankFinancable: true, financingTier: 'Prime', minDownPaymentPct: 0.10 };
+    return { maxTermAllowed: 48, minApr: 9.99, isBankFinancable: true, financingTier: 'Prime', minDownPaymentPct: 0.10 };
   }
 
   // 2015 — 9.59%: lowest 2015 funded in 2026 (Aug, 36 months); others at 9.99% and 11.49%.
@@ -286,8 +354,10 @@ export const calculateAutoLoan = (input: CalculationInput): CalculationResult =>
   // Desjardins sheet amortization cap for this year (informational: the rate
   // list empties past it; maxTermAllowed stays the panel-wide guideline).
   const desjardinsCap = provCode === 'ON' ? desjardinsMaxTerm(vehicleYear) : 0;
-  const maxTermAllowed = rules.maxTermAllowed;
-  const minApr = rules.minApr;
+  const limits = getTermLimits(vehicleYear, vehicleCondition, provCode, input.acceptsSubprime);
+  const maxTermAllowed = limits.maxTermAllowed;
+  const subprimeApr = SUBPRIME_APR;
+  const minApr = limits.isSubprime ? subprimeApr : rules.minApr;
   const isBankFinancable = rules.isBankFinancable;
 
   const province = PROVINCES.find(p => p.code === provCode) || PROVINCES[0];
@@ -391,7 +461,7 @@ export const calculateAutoLoan = (input: CalculationInput): CalculationResult =>
     minApr,
     minDownPaymentRequired,
     isBankFinancable,
-    financingTier: rules.financingTier,
+    financingTier: limits.isSubprime ? 'Subprime' : rules.financingTier,
     schedule,
     maxVehiclePrice: toCents(vehiclePrice),
     financedNegativeEquity,
@@ -410,6 +480,11 @@ export const calculateAutoLoan = (input: CalculationInput): CalculationResult =>
     availableAprs,
     desjardinsReservePct,
     desjardinsMaxTerm: desjardinsCap,
+    subprimeAvailable: limits.subprimeAvailable,
+    primeMaxTerm: limits.primeMaxTerm,
+    subprimeMaxTerm: limits.subprimeMaxTerm,
+    isSubprime: limits.isSubprime,
+    subprimeApr,
   };
 };
 
@@ -433,6 +508,7 @@ export interface ReverseInput {
   otherFees?: number;
   /** Optional insurance products (GAP / Life / A&H) financed on the deal */
   insuranceProducts?: number;
+  acceptsSubprime?: boolean;
 }
 
 export const reverseCalculateAutoLoan = (input: ReverseInput): CalculationResult => {
@@ -442,8 +518,9 @@ export const reverseCalculateAutoLoan = (input: ReverseInput): CalculationResult
   const provCode = provinceCode || 'ON';
   // Term is condition-based.
   const rules = getYearRules(vehicleYear, input.vehicleCondition);
-  const term = Math.min(termMonths, rules.maxTermAllowed);
-  const apr = input.apr ?? rules.minApr;
+  const limits = getTermLimits(vehicleYear, vehicleCondition, provCode, input.acceptsSubprime);
+  const term = Math.min(termMonths, limits.maxTermAllowed);
+  const apr = input.apr ?? (limits.isSubprime ? SUBPRIME_APR : rules.minApr);
 
   // Binary search for precision and safety under non-linear BC PST and Federal Luxury Tax curves
   let low = 0;
@@ -480,6 +557,7 @@ export const reverseCalculateAutoLoan = (input: ReverseInput): CalculationResult
         safetyCertification,
         otherFees,
         insuranceProducts,
+        acceptsSubprime: input.acceptsSubprime,
       });
     } catch {
       break;
@@ -522,6 +600,7 @@ export const reverseCalculateAutoLoan = (input: ReverseInput): CalculationResult
       safetyCertification,
       otherFees,
       insuranceProducts,
+      acceptsSubprime: input.acceptsSubprime,
     });
   };
 

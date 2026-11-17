@@ -42,17 +42,19 @@ describe('calculateAutoLoan', () => {
     expect(r.financingTier).toBe('Prime');
   });
 
-  it('2019-2020 vehicles: 84mo max, 7.99% min APR, Prime tier', () => {
+  it('2019 vehicles: 60mo prime max (78 with subprime), 7.99% min APR, Prime tier', () => {
     const r = calculateAutoLoan({ ...baseInput, vehicleYear: 2019 });
-    expect(r.maxTermAllowed).toBe(84);
+    expect(r.maxTermAllowed).toBe(60);
+    expect(r.subprimeMaxTerm).toBe(78);
     expect(r.minApr).toBe(7.99);
     expect(r.isBankFinancable).toBe(true);
     expect(r.financingTier).toBe('Prime');
   });
 
-  it('2018 vehicles: 72mo max, 7.99% min APR, Prime tier', () => {
+  it('2018 vehicles: 48mo prime max (60 with subprime), 7.99% min APR, Prime tier', () => {
     const r = calculateAutoLoan({ ...baseInput, vehicleYear: 2018 });
-    expect(r.maxTermAllowed).toBe(72);
+    expect(r.maxTermAllowed).toBe(48);
+    expect(r.subprimeMaxTerm).toBe(60);
     expect(r.minApr).toBe(7.99);
     expect(r.isBankFinancable).toBe(true);
     expect(r.financingTier).toBe('Prime');
@@ -60,19 +62,21 @@ describe('calculateAutoLoan', () => {
 
   // 2015-2017 are bank financable: 2026 contracts show National Bank funding a 2015 and a 2017,
   // and CIBC funding a 2016.
-  it('2017 vehicles: 60mo max, 8.49% min APR, Prime tier, 5% down', () => {
+  it('2017 vehicles: 36mo prime max (48 with subprime), 8.49% min APR, Prime tier, 5% down', () => {
     const r = calculateAutoLoan({ ...baseInput, vehicleYear: 2017 });
-    expect(r.maxTermAllowed).toBe(60);
+    expect(r.maxTermAllowed).toBe(36);
+    expect(r.subprimeMaxTerm).toBe(48);
     expect(r.minApr).toBe(8.49);
     expect(r.isBankFinancable).toBe(true);
     expect(r.financingTier).toBe('Prime');
     expect(r.minDownPaymentRequired).toBe(Math.round(45000 * 0.05));
   });
 
-  it('2016 vehicles: 48mo max, 8.99% min APR, Prime tier', () => {
+  it('2016 vehicles: 36mo prime max (60 with subprime), 9.99% min APR, Prime tier', () => {
     const r = calculateAutoLoan({ ...baseInput, vehicleYear: 2016 });
-    expect(r.maxTermAllowed).toBe(48);
-    expect(r.minApr).toBe(8.99);
+    expect(r.maxTermAllowed).toBe(36);
+    expect(r.subprimeMaxTerm).toBe(60);
+    expect(r.minApr).toBe(9.99);
     expect(r.isBankFinancable).toBe(true);
   });
 

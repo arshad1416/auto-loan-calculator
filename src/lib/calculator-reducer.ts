@@ -27,6 +27,7 @@ export type CalculatorAction =
   | { type: 'SET_FIELD'; field: keyof CalculationInput; value: number | string }
   | { type: 'COMMIT_DOWN_PAYMENT' }
   | { type: 'SET_YEAR'; year: number }
+  | { type: 'SET_SUBPRIME'; value: boolean }
   | { type: 'TOGGLE_SCHEDULE' }
   | { type: 'DISMISS_ADJUSTMENTS' }
   | { type: 'TOGGLE_MODE' }
@@ -83,6 +84,7 @@ function runReverseCalc(state: CalculatorState, overrides: Partial<CalculatorSta
     safetyCertification: s.inputs.safetyCertification,
     otherFees: s.inputs.otherFees,
     insuranceProducts: s.inputs.insuranceProducts,
+    acceptsSubprime: s.inputs.acceptsSubprime,
   });
 }
 
@@ -144,6 +146,17 @@ function rememberTerm(
 ): Record<number, number> {
   if (action.field !== 'termMonths') return state.termByYear;
   return { ...state.termByYear, [newInputs.vehicleYear]: newInputs.termMonths };
+}
+
+/**
+ * Longest term a fresh quote defaults to: the subprime maximum when the customer accepted subprime,
+ * otherwise the year's max snapped to the Desjardins-placeable term in ON (prime placement).
+ */
+function defaultMaxTerm(results: CalculationResult): number {
+  if (results.isSubprime) return results.maxTermAllowed;
+  return results.desjardinsMaxTerm > 0
+    ? Math.min(results.maxTermAllowed, results.desjardinsMaxTerm)
+    : results.maxTermAllowed;
 }
 
 /** Term to use when switching to `year`: the user's earlier pick for that year, else the year's max. */
@@ -237,9 +250,7 @@ export function calculatorReducer(state: CalculatorState, action: CalculatorActi
         const finalInputs = { ...newInputs, apr: clampedApr };
         // Restore the term the user previously chose for this year; otherwise use the year's max,
         // snapped to the Desjardins-placeable term in ON (the slider keeps the full panel range).
-        const reverseDefaultMax = rulesResult.desjardinsMaxTerm > 0
-          ? Math.min(rulesResult.maxTermAllowed, rulesResult.desjardinsMaxTerm)
-          : rulesResult.maxTermAllowed;
+        const reverseDefaultMax = defaultMaxTerm(rulesResult);
         const inputsForCalc = { ...finalInputs, termMonths: termForYear(state, year, reverseDefaultMax) };
         // The down payment is left as entered. The "Min Down Required" note tells the user what the
         // new year needs; it is only raised on blur (COMMIT_DOWN_PAYMENT).
@@ -273,15 +284,14 @@ export function calculatorReducer(state: CalculatorState, action: CalculatorActi
       // Seeded from the Desjardins sheet's lowest reserve-backed rate at the restored term when one
       // exists, falling back to the CARF guideline. The default quote snaps to the Desjardins-
       // placeable term in ON while the slider keeps the full panel range.
-      const defaultMax = rulesResult.desjardinsMaxTerm > 0
-        ? Math.min(rulesResult.maxTermAllowed, rulesResult.desjardinsMaxTerm)
-        : rulesResult.maxTermAllowed;
-      const termMonths = termForYear(state, year, defaultMax);
+      const termMonths = termForYear(state, year, defaultMaxTerm(rulesResult));
       const withNewTerm = calculateAutoLoan({ ...newInputs, termMonths });
 
       const finalInputs = {
         ...newInputs,
-        apr: withNewTerm.availableAprs[0]?.apr ?? rulesResult.minApr,
+        apr: withNewTerm.isSubprime
+          ? withNewTerm.subprimeApr
+          : withNewTerm.availableAprs[0]?.apr ?? rulesResult.minApr,
         // Restore the term the user previously chose for this year; otherwise use the year's max.
         termMonths,
         // Down payment is left as entered — the "Min Down Required" note communicates the new
@@ -296,6 +306,50 @@ export function calculatorReducer(state: CalculatorState, action: CalculatorActi
 
       const hasAdjustments = adjustments.apr || adjustments.termMonths || adjustments.downPayment;
 
+      return {
+        ...state,
+        inputs: finalInputs,
+        results: calculateAutoLoan(finalInputs),
+        adjustments: hasAdjustments ? adjustments : null,
+      };
+    }
+
+    // Customer accepts (or declines) subprime in exchange for a term past the prime limit.
+    // Accepting moves the quote to the longest subprime term at the subprime rate; declining clamps
+    // the term back to the prime limit and re-seeds the rate the way a year change does.
+    case 'SET_SUBPRIME': {
+      const oldInputs = state.inputs;
+      const toggled = { ...oldInputs, acceptsSubprime: action.value };
+      const limits = calculateAutoLoan(toggled);
+      let finalInputs: CalculationInput;
+      if (limits.isSubprime) {
+        finalInputs = { ...toggled, termMonths: limits.maxTermAllowed, apr: limits.subprimeApr };
+      } else {
+        const termMonths = Math.min(oldInputs.termMonths, limits.maxTermAllowed);
+        const withTerm = calculateAutoLoan({ ...toggled, termMonths });
+        // Only re-seed a rate we set; a rate the user typed while subprime was off stays.
+        const apr = oldInputs.acceptsSubprime && oldInputs.apr === state.results.subprimeApr
+          ? withTerm.availableAprs[0]?.apr ?? withTerm.minApr
+          : oldInputs.apr;
+        finalInputs = { ...toggled, termMonths, apr };
+      }
+
+      const adjustments: Adjustment = {
+        apr: oldInputs.apr !== finalInputs.apr ? { from: oldInputs.apr, to: finalInputs.apr } : null,
+        termMonths: oldInputs.termMonths !== finalInputs.termMonths ? { from: oldInputs.termMonths, to: finalInputs.termMonths } : null,
+        downPayment: null,
+      };
+      const hasAdjustments = adjustments.apr || adjustments.termMonths;
+
+      if (state.reverseMode) {
+        const results = runReverseCalc({ ...state, inputs: finalInputs }, {});
+        return {
+          ...state,
+          inputs: { ...finalInputs, vehiclePrice: results.maxVehiclePrice },
+          results,
+          adjustments: hasAdjustments ? adjustments : null,
+        };
+      }
       return {
         ...state,
         inputs: finalInputs,
