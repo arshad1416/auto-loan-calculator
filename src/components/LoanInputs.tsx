@@ -1,7 +1,7 @@
 import { tidy } from '../lib/money';
 import { useEffect, useState } from 'react';
 import type { CalculationInput, CalculationResult, VehicleCondition } from '../lib/calculator';
-import { PROVINCES, SUBPRIME_APR } from '../lib/calculator';
+import { PROVINCES } from '../lib/calculator';
 
 interface Props {
   inputs: CalculationInput;
@@ -170,7 +170,7 @@ const LoanInputs: React.FC<Props> = ({
       <span>
         <span className="check__label">Customer accepts subprime for a longer term</span>
         <span className="field__note">
-          {`Up to ${results.subprimeMaxTerm} months at ${SUBPRIME_APR}% or more, instead of ${results.primeMaxTerm} months at prime rates.`}
+          {`Up to ${results.subprimeMaxTerm} months at ${results.subprimeApr}% or more, instead of ${results.primeMaxTerm} months at prime rates.`}
         </span>
       </span>
     </label>

@@ -1,4 +1,4 @@
-import { calculateAutoLoan, reverseCalculateAutoLoan, PROVINCES, SUBPRIME_APR } from './calculator';
+import { calculateAutoLoan, reverseCalculateAutoLoan, PROVINCES } from './calculator';
 import type { CalculationInput, CalculationResult } from './calculator';
 
 // ── Types ───────────────────────────────────────────────────────────
@@ -290,7 +290,7 @@ export function calculatorReducer(state: CalculatorState, action: CalculatorActi
       const finalInputs = {
         ...newInputs,
         apr: withNewTerm.isSubprime
-          ? SUBPRIME_APR
+          ? withNewTerm.subprimeApr
           : withNewTerm.availableAprs[0]?.apr ?? rulesResult.minApr,
         // Restore the term the user previously chose for this year; otherwise use the year's max.
         termMonths,
@@ -323,12 +323,12 @@ export function calculatorReducer(state: CalculatorState, action: CalculatorActi
       const limits = calculateAutoLoan(toggled);
       let finalInputs: CalculationInput;
       if (limits.isSubprime) {
-        finalInputs = { ...toggled, termMonths: limits.maxTermAllowed, apr: SUBPRIME_APR };
+        finalInputs = { ...toggled, termMonths: limits.maxTermAllowed, apr: limits.subprimeApr };
       } else {
         const termMonths = Math.min(oldInputs.termMonths, limits.maxTermAllowed);
         const withTerm = calculateAutoLoan({ ...toggled, termMonths });
         // Only re-seed a rate we set; a rate the user typed while subprime was off stays.
-        const apr = oldInputs.acceptsSubprime && oldInputs.apr === SUBPRIME_APR
+        const apr = oldInputs.acceptsSubprime && oldInputs.apr === state.results.subprimeApr
           ? withTerm.availableAprs[0]?.apr ?? withTerm.minApr
           : oldInputs.apr;
         finalInputs = { ...toggled, termMonths, apr };

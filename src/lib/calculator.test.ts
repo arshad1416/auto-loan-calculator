@@ -72,11 +72,11 @@ describe('calculateAutoLoan', () => {
     expect(r.minDownPaymentRequired).toBe(Math.round(45000 * 0.05));
   });
 
-  it('2016 vehicles: 36mo prime max (42 with subprime), 8.99% min APR, Prime tier', () => {
+  it('2016 vehicles: 36mo prime max (60 with subprime), 9.99% min APR, Prime tier', () => {
     const r = calculateAutoLoan({ ...baseInput, vehicleYear: 2016 });
     expect(r.maxTermAllowed).toBe(36);
-    expect(r.subprimeMaxTerm).toBe(42);
-    expect(r.minApr).toBe(8.99);
+    expect(r.subprimeMaxTerm).toBe(60);
+    expect(r.minApr).toBe(9.99);
     expect(r.isBankFinancable).toBe(true);
   });
 

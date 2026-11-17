@@ -89,6 +89,8 @@ export interface CalculationResult {
   subprimeMaxTerm: number;
   /** True when the quote is on the subprime extension (accepted and available) */
   isSubprime: boolean;
+  /** Starting subprime rate for this model year */
+  subprimeApr: number;
 }
 
 /** Rounds a dollar amount to the nearest cent. */
@@ -159,12 +161,18 @@ export function subprimeMaxTermForYear(vehicleYear: number): number {
   if (vehicleYear >= 2019) return 78; // 2020: ACC/EP/QLI/SAN Extra Clean 78; 2019: QLI Extra Clean 78
   if (vehicleYear === 2018) return 60; // QLI Clean 60 (Santander 54, ACC/EP 48)
   if (vehicleYear === 2017) return 48; // EP/QLI Clean 48 (Santander 42, ACC 36)
-  if (vehicleYear === SUBPRIME_MIN_YEAR) return 42; // QLI 42 (EP 36, Santander 30, ACC 24)
+  if (vehicleYear === SUBPRIME_MIN_YEAR) return 60; // owner's figure, 2026-11-16 (sheets on file: QLI 42, EP 36)
   return 0;
 }
 // PLACEHOLDER pending owner confirmation: EdenPark 2026 Ride program, "6 Ride" tier rate-from
 // (84 months max). Other subprime starting rates on file: Santander tier 8 11.49%, AutoCapital tier 1 13.49%.
 export const SUBPRIME_APR = 11.99;
+
+/** Starting subprime rate for a model year. 2016: 12.9%, owner's figure (2026-11-16). */
+export function subprimeAprForYear(vehicleYear: number): number {
+  if (vehicleYear === SUBPRIME_MIN_YEAR) return 12.9;
+  return SUBPRIME_APR;
+}
 
 export interface TermLimits {
   maxTermAllowed: number;
@@ -255,10 +263,10 @@ export function getYearRules(vehicleYear: number, vehicleCondition?: VehicleCond
   }
 
   // 2015-2016 — bank financable: National Bank (2015) and CIBC (2016) both funded (2026).
-  // 2016 — 8.99%: a 2016 funded at 8.99% in Nov 2026 (244,000 km, 36 months). 48 months is the
+  // 2016 — 9.99% quoted to be safe (owner, 2026-11-16), though a 2016 funded at 8.99% in Nov 2026 (244,000 km, 36 months). 48 months is the
   // longest on the current booking guides (up to 140,000 km).
   if (vehicleYear >= 2016) {
-    return { maxTermAllowed: 48, minApr: 8.99, isBankFinancable: true, financingTier: 'Prime', minDownPaymentPct: 0.10 };
+    return { maxTermAllowed: 48, minApr: 9.99, isBankFinancable: true, financingTier: 'Prime', minDownPaymentPct: 0.10 };
   }
 
   // 2015 — 9.59%: lowest 2015 funded in 2026 (Aug, 36 months); others at 9.99% and 11.49%.
@@ -355,7 +363,8 @@ export const calculateAutoLoan = (input: CalculationInput): CalculationResult =>
   const desjardinsCap = provCode === 'ON' ? desjardinsMaxTerm(vehicleYear) : 0;
   const limits = getTermLimits(vehicleYear, vehicleCondition, provCode, input.acceptsSubprime);
   const maxTermAllowed = limits.maxTermAllowed;
-  const minApr = limits.isSubprime ? SUBPRIME_APR : rules.minApr;
+  const subprimeApr = subprimeAprForYear(vehicleYear);
+  const minApr = limits.isSubprime ? subprimeApr : rules.minApr;
   const isBankFinancable = rules.isBankFinancable;
 
   const province = PROVINCES.find(p => p.code === provCode) || PROVINCES[0];
@@ -482,6 +491,7 @@ export const calculateAutoLoan = (input: CalculationInput): CalculationResult =>
     primeMaxTerm: limits.primeMaxTerm,
     subprimeMaxTerm: limits.subprimeMaxTerm,
     isSubprime: limits.isSubprime,
+    subprimeApr,
   };
 };
 
@@ -517,7 +527,7 @@ export const reverseCalculateAutoLoan = (input: ReverseInput): CalculationResult
   const rules = getYearRules(vehicleYear, input.vehicleCondition);
   const limits = getTermLimits(vehicleYear, vehicleCondition, provCode, input.acceptsSubprime);
   const term = Math.min(termMonths, limits.maxTermAllowed);
-  const apr = input.apr ?? (limits.isSubprime ? SUBPRIME_APR : rules.minApr);
+  const apr = input.apr ?? (limits.isSubprime ? subprimeAprForYear(vehicleYear) : rules.minApr);
 
   // Binary search for precision and safety under non-linear BC PST and Federal Luxury Tax curves
   let low = 0;
