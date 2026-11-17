@@ -164,15 +164,8 @@ export function subprimeMaxTermForYear(vehicleYear: number): number {
   if (vehicleYear === SUBPRIME_MIN_YEAR) return 60; // owner's figure, 2026-11-16 (sheets on file: QLI 42, EP 36)
   return 0;
 }
-// PLACEHOLDER pending owner confirmation: EdenPark 2026 Ride program, "6 Ride" tier rate-from
-// (84 months max). Other subprime starting rates on file: Santander tier 8 11.49%, AutoCapital tier 1 13.49%.
-export const SUBPRIME_APR = 11.99;
-
-/** Starting subprime rate for a model year. 2016: 12.9%, owner's figure (2026-11-16). */
-export function subprimeAprForYear(vehicleYear: number): number {
-  if (vehicleYear === SUBPRIME_MIN_YEAR) return 12.9;
-  return SUBPRIME_APR;
-}
+// Starting subprime rate for every eligible year: owner's figure (2026-11-16).
+export const SUBPRIME_APR = 12.9;
 
 export interface TermLimits {
   maxTermAllowed: number;
@@ -363,7 +356,7 @@ export const calculateAutoLoan = (input: CalculationInput): CalculationResult =>
   const desjardinsCap = provCode === 'ON' ? desjardinsMaxTerm(vehicleYear) : 0;
   const limits = getTermLimits(vehicleYear, vehicleCondition, provCode, input.acceptsSubprime);
   const maxTermAllowed = limits.maxTermAllowed;
-  const subprimeApr = subprimeAprForYear(vehicleYear);
+  const subprimeApr = SUBPRIME_APR;
   const minApr = limits.isSubprime ? subprimeApr : rules.minApr;
   const isBankFinancable = rules.isBankFinancable;
 
@@ -527,7 +520,7 @@ export const reverseCalculateAutoLoan = (input: ReverseInput): CalculationResult
   const rules = getYearRules(vehicleYear, input.vehicleCondition);
   const limits = getTermLimits(vehicleYear, vehicleCondition, provCode, input.acceptsSubprime);
   const term = Math.min(termMonths, limits.maxTermAllowed);
-  const apr = input.apr ?? (limits.isSubprime ? subprimeAprForYear(vehicleYear) : rules.minApr);
+  const apr = input.apr ?? (limits.isSubprime ? SUBPRIME_APR : rules.minApr);
 
   // Binary search for precision and safety under non-linear BC PST and Federal Luxury Tax curves
   let low = 0;

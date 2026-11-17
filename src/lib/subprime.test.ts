@@ -1,8 +1,5 @@
 import { describe, it, expect } from 'vitest';
 import { calculateAutoLoan, getTermLimits, reverseCalculateAutoLoan, SUBPRIME_APR } from './calculator';
-
-// 2016: owner's figures (2026-11-16) — prime quoted at 9.99%, subprime 60 months from 12.9%.
-const SUB_2016 = 12.9;
 import { calculatorReducer } from './calculator-reducer';
 import type { CalculatorState } from './calculator-reducer';
 import type { CalculationInput } from './calculator';
@@ -31,6 +28,10 @@ const stateFor = (inputs: CalculationInput, reverseMode = false): CalculatorStat
   targetMonthlyPayment: 650,
   termByYear: {},
   downPaymentRaised: false,
+});
+
+it('subprime starts at 12.9% (owner, 2026-11-16)', () => {
+  expect(SUBPRIME_APR).toBe(12.9);
 });
 
 describe('getTermLimits — subprime longer-term option', () => {
@@ -75,10 +76,10 @@ describe('getTermLimits — subprime longer-term option', () => {
 
 describe('calculateAutoLoan with acceptsSubprime', () => {
   it('reports the subprime tier and floor rate when accepted', () => {
-    const r = calculateAutoLoan(deal({ acceptsSubprime: true, apr: SUB_2016, termMonths: 60 }));
+    const r = calculateAutoLoan(deal({ acceptsSubprime: true, apr: SUBPRIME_APR, termMonths: 60 }));
     expect(r.isSubprime).toBe(true);
     expect(r.financingTier).toBe('Subprime');
-    expect(r.minApr).toBe(SUB_2016);
+    expect(r.minApr).toBe(SUBPRIME_APR);
     expect(r.maxTermAllowed).toBe(60);
   });
 
@@ -91,7 +92,7 @@ describe('calculateAutoLoan with acceptsSubprime', () => {
   });
 
   it('reverse mode uses the subprime term when accepted (longer term buys more car)', () => {
-    const base = { targetBiWeeklyPayment: 300, targetMonthlyPayment: 650, vehicleYear: 2016, tradeInValue: 0, lienAmount: 0, downPayment: 2000, apr: SUB_2016, termMonths: 60, licensingFee: 59, provinceCode: 'ON', vehicleCondition: 'used' as const };
+    const base = { targetBiWeeklyPayment: 300, targetMonthlyPayment: 650, vehicleYear: 2016, tradeInValue: 0, lienAmount: 0, downPayment: 2000, apr: SUBPRIME_APR, termMonths: 60, licensingFee: 59, provinceCode: 'ON', vehicleCondition: 'used' as const };
     const prime = reverseCalculateAutoLoan(base);
     const sub = reverseCalculateAutoLoan({ ...base, acceptsSubprime: true });
     expect(prime.maxTermAllowed).toBe(36);
@@ -105,10 +106,10 @@ describe('calculatorReducer SET_SUBPRIME', () => {
     const next = calculatorReducer(stateFor(deal()), { type: 'SET_SUBPRIME', value: true });
     expect(next.inputs.acceptsSubprime).toBe(true);
     expect(next.inputs.termMonths).toBe(60);
-    expect(next.inputs.apr).toBe(SUB_2016);
+    expect(next.inputs.apr).toBe(SUBPRIME_APR);
     expect(next.results.isSubprime).toBe(true);
     expect(next.adjustments?.termMonths).toEqual({ from: 36, to: 60 });
-    expect(next.adjustments?.apr).toEqual({ from: 9.99, to: SUB_2016 });
+    expect(next.adjustments?.apr).toEqual({ from: 9.99, to: SUBPRIME_APR });
   });
 
   it('declining clamps the term back to the prime limit and re-seeds the rate', () => {
@@ -116,7 +117,7 @@ describe('calculatorReducer SET_SUBPRIME', () => {
     const off = calculatorReducer(on, { type: 'SET_SUBPRIME', value: false });
     expect(off.inputs.acceptsSubprime).toBe(false);
     expect(off.inputs.termMonths).toBe(36);
-    expect(off.inputs.apr).not.toBe(SUB_2016);
+    expect(off.inputs.apr).not.toBe(SUBPRIME_APR);
     expect(off.results.isSubprime).toBe(false);
   });
 
